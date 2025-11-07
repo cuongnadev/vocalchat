@@ -3,8 +3,9 @@ import { Outlet } from "@tanstack/react-router"
 function AuthLayout() {
     return (
         <>
-            <div>AuthLayout</div>
-            <Outlet />
+            <div className="flex items-center justify-center h-screen">
+                <Outlet />
+            </div>
         </>
     )
 }
