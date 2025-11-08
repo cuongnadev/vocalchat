@@ -32,7 +32,7 @@ const authLayoutRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/auth",
     component: AuthLayout,
-})
+});
 
 const loginRoute = createRoute({
     getParentRoute: () => authLayoutRoute,
@@ -49,14 +49,14 @@ const registerRoute = createRoute({
 const verifyCode = createRoute({
   getParentRoute: () => authLayoutRoute,
   path: "/register/verify-code",
-  component: VerifyCode
-})
+  component: VerifyCode,
+});
 
 const profileInfo = createRoute({
   getParentRoute: () => authLayoutRoute,
   path: "/register/profile-info",
-  component: ProfileInfo
-})
+  component: ProfileInfo,
+});
 
 const rootRedirectRoute = createRoute({
   getParentRoute: () => rootRoute,

@@ -8,7 +8,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 export default function VerifyCode() {
     const navigate = useNavigate();
-    const { phone } = useSearch({ from: "/auth/register/verify-code" });
+    const { email } = useSearch({ from: "/auth/register/verify-code" });
     const [codes, setCodes] = useState<string[]>(['', '', '', '', '', '']);
     const inputsRef = useRef<HTMLInputElement[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -96,13 +96,13 @@ export default function VerifyCode() {
         setError(null);
 
         try {
-            const data = await verifyOtp(phone, code);
+            const data = await verifyOtp(email, code);
 
             if (!data.success) throw new Error(data.message);
 
             navigate({
                 to: '/auth/register/profile-info',
-                search: { phone },
+                search: { email },
             });
         } catch (err) {
             const apiErr = err as ApiError;
@@ -123,7 +123,7 @@ export default function VerifyCode() {
         >
             <h1 className='text-2xl font-bold text-white text-center mb-4'>Verify Code</h1>
             <p className='text-gray-300 text-center text-sm mb-6'>
-                Enter the code we sent to <span className="text-[#00FFFF]">{phone}</span>
+                Enter the code we sent to email: <span className="text-[#00FFFF]">{email}</span>
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">

@@ -1,5 +1,6 @@
 import { env } from '@/config/env.config';
 import { comparePassword, hashPassword } from '@/libs/hash';
+import { sendMail } from '@/libs/mail';
 import { generateOtp } from '@/libs/otp';
 import { Otp } from '@/models/otp.model';
 import { User } from '@/models/user.model';
@@ -9,32 +10,36 @@ import jwt from 'jsonwebtoken';
 export const AuthController = {
   async register(req: Request, res: Response) {
     try {
-      const { phone, password } = req.body;
-      if (!phone || !password)
-        return res.status(400).json({ success: false, message: 'Missing phone or password' });
+      const { email, password } = req.body;
+      if (!email || !password)
+        return res.status(400).json({ success: false, message: 'Missing email or password' });
 
-      const exits = await User.findOne({ phone });
+      const exits = await User.findOne({ email });
       if (exits)
-        return res.status(400).json({ success: false, message: 'Phone number already exists' });
-
-      const hashedPassword = await hashPassword(password);
-
-      const newUser = await User.create({
-        phone,
-        password: hashedPassword,
-        lastSeen: new Date().toISOString(),
-      });
+        return res.status(400).json({ success: false, message: 'Email number already exists' });
 
       const code = generateOtp();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
       const otp = await Otp.create({
-        phone,
+        email,
         code,
         expiresAt,
       });
 
-      // TODO: Send OTP into SMS
-      console.log('📩 OTP for', phone, '=>', otp);
+      await sendMail(
+        email,
+        'Your VocalChat OTP code',
+        `Hello! Your OTP code is: ${code}. It will expire in 5 minutes.`,
+      );
+      console.log('📩 OTP for', email, '=>', otp);
+
+      const hashedPassword = await hashPassword(password);
+
+      const newUser = await User.create({
+        email,
+        password: hashedPassword,
+        lastSeen: new Date().toISOString(),
+      });
 
       return res.status(201).json({
         success: true,
@@ -48,18 +53,18 @@ export const AuthController = {
 
   async verify(req: Request, res: Response) {
     try {
-      const { phone, code } = req.body;
-      if (!phone || !code)
-        return res.status(400).json({ success: false, message: 'Missing phone or code' });
+      const { email, code } = req.body;
+      if (!email || !code)
+        return res.status(400).json({ success: false, message: 'Missing email or code' });
 
-      const user = await User.findOne({ phone });
+      const user = await User.findOne({ email });
       if (!user) return res.status(400).json({ success: false, message: 'Account not found' });
       if (user.isVerified)
         return res
           .status(400)
           .json({ success: false, message: 'Account already verified', data: null });
 
-      const otpRecord = await Otp.findOne({ phone, code });
+      const otpRecord = await Otp.findOne({ email, code });
       if (!otpRecord)
         return res.status(400).json({ success: false, message: 'Invalid OTP', data: null });
 
@@ -71,7 +76,7 @@ export const AuthController = {
       user.isVerified = true;
       await user.save();
 
-      await Otp.deleteMany({ phone });
+      await Otp.deleteMany({ email });
 
       return res
         .status(200)
@@ -83,13 +88,13 @@ export const AuthController = {
 
   async updateProfile(req: Request, res: Response) {
     try {
-      const { phone, name } = req.body;
-      if (!phone || !name)
+      const { email, name } = req.body;
+      if (!email || !name)
         return res
           .status(400)
-          .json({ success: false, message: 'Missing phone or name', data: null });
+          .json({ success: false, message: 'Missing email or name', data: null });
 
-      const user = await User.findOne({ phone });
+      const user = await User.findOne({ email });
       if (!user)
         return res.status(400).json({ success: false, message: 'Account not found', data: null });
       if (!user.isVerified)
@@ -110,13 +115,13 @@ export const AuthController = {
 
   async login(req: Request, res: Response) {
     try {
-      const { phone, password } = req.body;
-      if (!phone || !password)
+      const { email, password } = req.body;
+      if (!email || !password)
         return res
           .status(400)
-          .json({ success: false, message: 'Missing phone or password', data: null });
+          .json({ success: false, message: 'Missing email or password', data: null });
 
-      const user = await User.findOne({ phone });
+      const user = await User.findOne({ email });
       if (!user)
         return res.status(400).json({ success: false, message: 'Account not found', data: null });
 

@@ -9,7 +9,7 @@ import { updateProfile } from '@/app/api';
 
 export default function ProfileInfo() {
     const navigate = useNavigate();
-    const { phone } = useSearch({ from: '/auth/register/profile-info' });
+    const { email } = useSearch({ from: '/auth/register/profile-info' });
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +17,7 @@ export default function ProfileInfo() {
         e.preventDefault();
 
         try {
-            const data = await updateProfile(phone, name);
+            const data = await updateProfile(email, name);
 
             if (!data.success) throw new Error(data.message);
 
@@ -61,7 +61,7 @@ export default function ProfileInfo() {
             </form>
 
             <p className="text-center text-xs text-gray-400 mt-6">
-                Phone number: <span className="text-[#00FFFF]">{phone}</span>
+                Email: <span className="text-[#00FFFF]">{email}</span>
             </p>
 
             <div className="absolute top-4 right-4 w-10 h-10 rounded-tr-lg border-t-2 border-r-2 border-[#00FFFF]" />

@@ -2,14 +2,14 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button/Button';
 import { useNavigate } from '@tanstack/react-router';
-import { Smartphone, Lock } from 'lucide-react';
+import { User, Lock } from 'lucide-react';
 import { useState } from 'react';
 import type { ApiError } from '@/types/api';
 import { register } from '@/app/api';
 
 export default function Register() {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
@@ -18,13 +18,13 @@ export default function Register() {
     e.preventDefault();
 
     try {
-      const data = await register(phone, password);
+      const data = await register(email, password);
 
       if (!data.success) throw new Error(data.message);
 
       navigate({
         to: '/auth/register/verify-code',
-        search: { phone },
+        search: { email },
       });
     } catch (err) {
       const apiErr = err as ApiError;
@@ -52,13 +52,13 @@ export default function Register() {
       <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
         <div className="flex flex-col text-left">
           <label className="flex items-center gap-1 text-gray-300 mb-2 text-sm">
-            <Smartphone width={16} height={16} color="#00FFFF" /> Phone Number
+            <User width={16} height={16} color="#00FFFF" /> Email
           </label>
           <input
             type="tel"
-            placeholder="e.g. +84 912 345 678"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            placeholder="your_email@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
             className="px-5 py-3 rounded-xl bg-white/15 border border-white/30 placeholder-gray-400 text-white focus:outline-none focus:ring-4 focus:ring-[#00FFFF] transition-all duration-300"
           />

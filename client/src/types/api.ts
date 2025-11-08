@@ -6,7 +6,7 @@ export type ApiResponse<T> = {
 
 export interface User {
   _id: string;
-  phone: string;
+  email: string;
   name?: string;
   isVerified: boolean;
   isOnline?: boolean;
