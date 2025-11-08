@@ -1,5 +1,7 @@
 'use client';
+import { login } from '@/app/api';
 import { Button } from '@/components/ui/button/Button';
+import type { ApiError } from '@/types/api';
 import { useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { Smartphone, Wrench } from 'lucide-react';
@@ -12,14 +14,20 @@ export default function Login() {
     const [remember, setRemember] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // handle login
-        // emulator login success
-        sessionStorage.setItem('token', 'dummy_token');
+        try {
+            const data = await login(phone, password);
+            if (!data.success) throw new Error(data.message);
 
-        navigate({ to: '/chat' });
+            sessionStorage.setItem('token', data.data.token);
+
+            navigate({ to: '/chat' })
+        } catch (err) {
+            const apiErr = err as ApiError;
+            setError(apiErr.message || 'Login failed');
+        }
     }
 
     const handleGoRegister = (e: React.MouseEvent) => {

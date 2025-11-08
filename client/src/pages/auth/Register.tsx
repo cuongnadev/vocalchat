@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button/Button';
 import { useNavigate } from '@tanstack/react-router';
 import { Smartphone, Lock } from 'lucide-react';
 import { useState } from 'react';
+import type { ApiError } from '@/types/api';
+import { register } from '@/app/api';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -12,15 +14,22 @@ export default function Register() {
   const [error, setError] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // handle sent code to phone number
+    try {
+      const data = await register(phone, password);
 
-    navigate({
-      to: '/auth/register/verify-code',
-      search: { phone },
-    });
+      if (!data.success) throw new Error(data.message);
+
+      navigate({
+        to: '/auth/register/verify-code',
+        search: { phone },
+      });
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setError(apiErr.message || 'Register failed');
+    }
   };
 
   const handleGoLogin = (e: React.MouseEvent) => {

@@ -1,5 +1,7 @@
 'use client';
+import { verifyOtp } from '@/app/api';
 import { Button } from '@/components/ui/button/Button';
+import type { ApiError } from '@/types/api';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
@@ -84,7 +86,7 @@ export default function VerifyCode() {
         inputsRef.current[focusIndex]?.select();
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const code = codes.join('');
         if (code.length < 6) {
@@ -93,12 +95,19 @@ export default function VerifyCode() {
         }
         setError(null);
 
-        // handle verify
+        try {
+            const data = await verifyOtp(phone, code);
 
-        navigate({
-            to: "/auth/register/profile-info",
-            search: { phone },
-        });
+            if (!data.success) throw new Error(data.message);
+
+            navigate({
+                to: '/auth/register/profile-info',
+                search: { phone },
+            });
+        } catch (err) {
+            const apiErr = err as ApiError;
+            setError(apiErr.message || 'Verification failed');
+        }
     };
 
     const handleResend = (e: React.MouseEvent) => {
