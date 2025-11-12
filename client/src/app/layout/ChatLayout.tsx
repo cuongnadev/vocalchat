@@ -1,12 +1,11 @@
-import { Outlet } from "@tanstack/react-router"
+import { Outlet } from "@tanstack/react-router";
 
 function ChatLayout() {
-    return (
-        <>
-            <div>ChatLayout</div>
-            <Outlet />
-        </>
-    );
+  return (
+    <main className="bg-gray-100 w-full h-screen">
+      <Outlet />
+    </main>
+  );
 }
 
-export default ChatLayout
+export default ChatLayout;
