@@ -25,7 +25,7 @@ export const Sidebar = ({
       {/* Header with New Chat button */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="flex items-center gap-2 text-xl font-bold text-white">
-          <img src="/logo.png" alt="logo" className="w-6 h-6" />
+          <img src="/logo.ico" alt="logo" className="w-6 h-6" />
           VocalChat
         </h2>
         <button
