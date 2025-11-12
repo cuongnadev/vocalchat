@@ -4,16 +4,29 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { User } from 'lucide-react';
+import type { ApiError, } from '@/types/api';
+import { updateProfile } from '@/app/api';
 
 export default function ProfileInfo() {
     const navigate = useNavigate();
-    const { phone } = useSearch({ from: '/auth/register/profile-info' });
+    const { email } = useSearch({ from: '/auth/register/profile-info' });
     const [name, setName] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
-    const handleFinish = (e: React.FormEvent) => {
+    const handleFinish = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // handle complete register
+        try {
+            const data = await updateProfile(email, name);
+
+            if (!data.success) throw new Error(data.message);
+
+            sessionStorage.setItem('token', data.data.token);
+            navigate({ to: '/auth/login' });
+        } catch (err) {
+            const apiErr = err as ApiError;
+            setError(apiErr.message || 'Update info failed');
+        }
 
         navigate({ to: '/auth/login' });
     };
@@ -42,11 +55,13 @@ export default function ProfileInfo() {
                     />
                 </div>
 
+                {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+
                 <Button text="Finish" className="mt-4" />
             </form>
 
             <p className="text-center text-xs text-gray-400 mt-6">
-                Phone number: <span className="text-[#00FFFF]">{phone}</span>
+                Email: <span className="text-[#00FFFF]">{email}</span>
             </p>
 
             <div className="absolute top-4 right-4 w-10 h-10 rounded-tr-lg border-t-2 border-r-2 border-[#00FFFF]" />

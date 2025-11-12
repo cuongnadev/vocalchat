@@ -1,25 +1,33 @@
 'use client';
+import { login } from '@/app/api';
 import { Button } from '@/components/ui/button/Button';
+import type { ApiError } from '@/types/api';
 import { useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { Smartphone, Wrench } from 'lucide-react';
+import { User, Wrench } from 'lucide-react';
 import React, { useState } from 'react';
 
 export default function Login() {
     const navigate = useNavigate();
-    const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [remember, setRemember] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // handle login
-        // emulator login success
-        sessionStorage.setItem('token', 'dummy_token');
+        try {
+            const data = await login(email, password);
+            if (!data.success) throw new Error(data.message);
 
-        navigate({ to: '/chat' });
+            sessionStorage.setItem('token', data.data.token);
+
+            navigate({ to: '/chat' })
+        } catch (err) {
+            const apiErr = err as ApiError;
+            setError(apiErr.message || 'Login failed');
+        }
     }
 
     const handleGoRegister = (e: React.MouseEvent) => {
@@ -42,12 +50,12 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
                 <div className="flex flex-col text-left">
-                    <label className="flex items-center gap-1 text-gray-300 mb-2 text-sm"><Smartphone width={16} height={16} color='#00FFFF' /> Phone number</label>
+                    <label className="flex items-center gap-1 text-gray-300 mb-2 text-sm"><User width={16} height={16} color='#00FFFF' /> Email</label>
                     <input
                         type="tel"
-                        placeholder="e.g. +84 912 345 678"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="your_email@gmail.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                         className="px-5 py-3 rounded-xl bg-white/15 border border-white/30 placeholder-gray-400 text-white focus:outline-none focus:ring-4 focus:ring-[#00FFFF] transition-all duration-300"
                     />

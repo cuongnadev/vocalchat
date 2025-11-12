@@ -26,8 +26,7 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Database
-// connectDB()
+connectDB();
 
 // Routes
 app.use('/api/v1/auth', authRoute);
