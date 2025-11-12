@@ -139,7 +139,7 @@ export const ChatArea = ({
               className="p-3 bg-linear-to-r from-[#00FFFF] to-[#8B5CF6] hover:from-[#00FFFF]/80 hover:to-[#8B5CF6]/80 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
               title="Send message"
             >
-              <Send size={18} className="text-white" />
+              <Send size={20} className="text-white" />
             </button>
           ) : (
             <button
