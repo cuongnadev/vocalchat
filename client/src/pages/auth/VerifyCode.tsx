@@ -1,5 +1,5 @@
 'use client';
-import { verifyOtp } from '@/app/api';
+import { verifyOtp } from '@/app/api/auth';
 import { Button } from '@/components/ui/button/Button';
 import type { ApiError } from '@/types/api';
 import { useNavigate, useSearch } from '@tanstack/react-router';
