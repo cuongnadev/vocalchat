@@ -7,10 +7,24 @@ export type ApiResponse<T> = {
 export interface UserResponse {
   _id: string;
   email: string;
-  name?: string;
+  name: string;
+  avatar?: string;
+  phone?: string;
   isVerified: boolean;
-  isOnline?: boolean;
-  lastSeen?: string;
+  isOnline: boolean;
+  lastSeen: string;
+  relationshipStatus?: "none" | "friends" | "pending";
+  isSender?: boolean;
+  friendshipId?: string;
+}
+
+export interface FriendRequest {
+  _id: string;
+  requester: User;
+  recipient: User;
+  status: "pending" | "accepted" | "rejected";
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type RegisterResponse = ApiResponse<{ user_id: string }>;

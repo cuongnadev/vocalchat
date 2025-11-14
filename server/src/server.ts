@@ -3,11 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { Server } from 'socket.io';
-import authRoute from '@/routes/auth.route';
-import messageRoute from '@/routes/message.route';
 import { env } from '@/config/env.config';
 import { connectDB } from '@/libs/db';
+import AppRouters from './routes/index.route';
 import { initSocket } from './services/socket.service';
+
 
 const PORT = env.PORT;
 const CLIENT_URL = env.CLIENT_URL;
@@ -30,8 +30,7 @@ app.use(morgan('dev'));
 connectDB();
 
 // Routes
-app.use('/api/v1/auth', authRoute);
-app.use('/api/v1/message', messageRoute);
+AppRouters(app);
 
 initSocket(io);
 

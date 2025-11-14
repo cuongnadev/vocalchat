@@ -4,4 +4,4 @@ const router = Router();
 
 // routes
 
-export default router;
+export const messageRoutes = router;

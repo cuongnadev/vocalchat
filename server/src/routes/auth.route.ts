@@ -8,4 +8,4 @@ router.post('/verify-code', AuthController.verify);
 router.post('/update-info', AuthController.updateProfile);
 router.post('/login', AuthController.login);
 
-export default router;
+export const authRoutes = router;

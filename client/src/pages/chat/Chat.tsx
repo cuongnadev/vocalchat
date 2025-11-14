@@ -2,28 +2,41 @@ import { useState } from "react";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { FriendsView } from "@/components/view/friends/FriendsView";
-import {
-  currentUser,
-  potentialFriends,
-  conversationsData,
-} from "@/constants/mock-data";
-import type { User } from "@/types/user";
 import { SettingsView } from "@/components/view/setting/SettingsView";
 import { CreateGroupModal } from "@/components/common/modal/CreateGroupModal";
+import { useAuth } from "@/hooks/useAuth";
+import { sendFriendRequest, updateUserProfile, unfriend } from "@/app/api";
+import { conversationsData } from "@/constants/mock-data";
+import type { User } from "@/types/user";
+import { useToast } from "@/hooks/useToast";
+import { Toast } from "@/components/ui/toast/Toast";
 
 type ViewType = "chat" | "friends" | "settings";
 
 const Chat = () => {
+  const { user, loading, refreshUser } = useAuth();
+  const { toasts, showToast, removeToast } = useToast();
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
   const [currentView, setCurrentView] = useState<ViewType>("chat");
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-[#0a001f] via-[#10002b] to-[#1b0038]">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   const handleSelectConversation = (conversationId: string) => {
     setActiveConversationId(conversationId);
     setCurrentView("chat");
-    // TODO: When integrating backend, mark messages as read
   };
 
   const handleSettingsClick = () => {
@@ -39,21 +52,65 @@ const Chat = () => {
   };
 
   const handleCreateGroup = (groupName: string, selectedUserIds: string[]) => {
-    // TODO: Implement create group functionality
     console.log("Creating group:", groupName, selectedUserIds);
+    // TODO: Implement create group functionality with API
   };
 
-  const handleAddFriend = (userId: string) => {
-    // TODO: Implement add friend functionality
-    console.log("Adding friend:", userId);
+  const handleAddFriend = async (userId: string) => {
+    try {
+      const response = await sendFriendRequest(userId);
+      if (response.success) {
+        showToast("success", "Friend request sent successfully!");
+      }
+    } catch (error) {
+      const err = error as Error;
+      showToast("error", err.message || "Failed to send friend request");
+    }
   };
 
-  const handleSaveSettings = (updatedUser: Partial<User>) => {
-    // TODO: Implement save settings functionality
-    console.log("Saving settings:", updatedUser);
+  const handleUnfriend = async (userId: string) => {
+    try {
+      const response = await unfriend(userId);
+      if (response.success) {
+        showToast("success", "Unfriended successfully!");
+      }
+    } catch (error) {
+      const err = error as Error;
+      showToast("error", err.message || "Failed to unfriend");
+    }
   };
 
-  // Get available users for group creation (all users from conversations)
+  const handleSaveSettings = async (
+    updatedUser: Partial<User> & { oldPassword?: string; password?: string }
+  ) => {
+    try {
+      const response = await updateUserProfile({
+        name: updatedUser.name,
+        avatar: updatedUser.avatar,
+        phone: updatedUser.phone,
+        oldPassword: updatedUser.oldPassword,
+        password: updatedUser.password,
+      });
+
+      if (response.success) {
+        showToast("success", "Profile updated successfully!");
+        await refreshUser();
+      }
+    } catch (error) {
+      const err = error as Error;
+      showToast("error", err.message || "Failed to update profile");
+    }
+  };
+
+  const currentUser: User = {
+    id: user._id,
+    name: user.name,
+    avatar: user.avatar || "https://avatar.iran.liara.run/public",
+    email: user.email,
+    isOnline: user.isOnline,
+  };
+
+  // Get available users for group creation
   const availableUsers = conversationsData.map((conv) => conv.participant);
 
   return (
@@ -74,7 +131,6 @@ const Chat = () => {
         onNewChatClick={handleNewChatClick}
       />
 
-      {/* Conditional Rendering based on current view */}
       {currentView === "chat" && (
         <ChatArea
           className="flex-1 relative z-10"
@@ -86,8 +142,9 @@ const Chat = () => {
       {currentView === "friends" && (
         <FriendsView
           className="flex-1 relative z-10"
-          potentialFriends={potentialFriends}
           onAddFriend={handleAddFriend}
+          onUnfriend={handleUnfriend}
+          showToast={showToast}
         />
       )}
 
@@ -96,6 +153,7 @@ const Chat = () => {
           className="flex-1 relative z-10"
           currentUser={currentUser}
           onSaveSettings={handleSaveSettings}
+          showToast={showToast}
         />
       )}
 
@@ -120,6 +178,17 @@ const Chat = () => {
       `,
         }}
       />
+
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            type={toast.type}
+            message={toast.message}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
