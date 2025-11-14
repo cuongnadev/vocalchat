@@ -1,4 +1,5 @@
-import type { Conversation, Message, User } from "@/types/message";
+import type { Conversation, Message } from "@/types/message";
+import type { User } from "@/types/user";
 
 // // FAKE DATA: Current user
 export const currentUser: User = {
@@ -122,7 +123,7 @@ export const messagesData: Record<string, Message[]> = {
       timestamp: "10:33 AM",
       createdAt: new Date(Date.now() - 3420000).toISOString(),
       isRead: false,
-      status: "delivered",
+      status: "sent",
       type: "text",
     },
     {
@@ -146,7 +147,7 @@ export const messagesData: Record<string, Message[]> = {
       timestamp: "10:35 AM",
       createdAt: new Date(Date.now() - 60000).toISOString(),
       isRead: false,
-      status: "delivered",
+      status: "sent",
       type: "text",
     },
   ],
@@ -184,7 +185,7 @@ export const messagesData: Record<string, Message[]> = {
       timestamp: "9:06 AM",
       createdAt: new Date(Date.now() - 120000).toISOString(),
       isRead: false,
-      status: "delivered",
+      status: "sent",
       type: "text",
     },
   ],
@@ -279,7 +280,7 @@ export const conversationsData: Conversation[] = [
       timestamp: "3h",
       createdAt: new Date(Date.now() - 10800000).toISOString(),
       isRead: false,
-      status: "delivered",
+      status: "sent",
       type: "text",
     },
     unreadCount: 5,
@@ -380,5 +381,65 @@ export const conversationsData: Conversation[] = [
     isArchived: false,
     createdAt: new Date(Date.now() - 432000000).toISOString(),
     updatedAt: new Date(Date.now() - 172800000).toISOString(),
+  },
+];
+
+// FAKE DATA: Potential Friends (users not yet friends with)
+export const potentialFriends: User[] = [
+  {
+    id: "user_9",
+    name: "Mai",
+    avatar: "https://i.pravatar.cc/150?img=26",
+    email: "mai@example.com",
+    isOnline: true,
+  },
+  {
+    id: "user_10",
+    name: "Khoa",
+    avatar: "https://i.pravatar.cc/150?img=13",
+    email: "khoa@example.com",
+    isOnline: false,
+  },
+  {
+    id: "user_11",
+    name: "Thảo",
+    avatar: "https://i.pravatar.cc/150?img=47",
+    email: "thao@example.com",
+    isOnline: true,
+  },
+  {
+    id: "user_12",
+    name: "Duy",
+    avatar: "https://i.pravatar.cc/150?img=11",
+    email: "duy@example.com",
+    isOnline: false,
+  },
+  {
+    id: "user_13",
+    name: "Lan",
+    avatar: "https://i.pravatar.cc/150?img=32",
+    email: "lan@example.com",
+    isOnline: true,
+  },
+  {
+    id: "user_14",
+    name: "Hoàng",
+    avatar: "https://i.pravatar.cc/150?img=52",
+    email: "hoang@example.com",
+    isOnline: false,
+  },
+  {
+    id: "user_15",
+    name: "Nga",
+    avatar: "https://i.pravatar.cc/150?img=23",
+    email: "nga@example.com",
+    isOnline: true,
+  },
+  {
+    id: "user_16",
+    name: "Minh",
+    avatar: "https://i.pravatar.cc/150?img=60",
+    email: "minh@example.com",
+    isOnline: false,
   },
 ];

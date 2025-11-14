@@ -1,20 +1,7 @@
-export type MessageSender = "me" | "them";
-export type MessageStatus =
-  | "sending"
-  | "sent"
-  | "delivered"
-  | "read"
-  | "failed";
+import type { User } from "./user";
 
-export type User = {
-  id: string;
-  name: string;
-  avatar: string;
-  email?: string;
-  phone?: string;
-  isOnline: boolean;
-  lastSeen?: string;
-};
+export type MessageSender = "me" | "them";
+export type MessageStatus = "sending" | "sent" | "read" | "failed";
 
 export type Message = {
   id: string;
