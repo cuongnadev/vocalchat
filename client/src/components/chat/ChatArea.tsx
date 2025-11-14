@@ -1,31 +1,53 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, Mic, Image, Paperclip } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
-import { conversationsData, messagesData } from "@/constants/mock-data";
+import { conversationsData } from "@/constants/mock-data";
 import { Header } from "./Header";
 import { Button } from "../ui/button/Button";
 import { Input } from "../ui/input/input";
+import { socketService } from "@/services/chatService";
+import type { Message } from "@/types/message";
+import type { ReceiveMessagePayload, SendTextMessagePayload } from "@/types/socket";
 
 type ChatAreaProps = {
   className?: string;
   activeConversationId: string | null;
+  currentUserId: string;
 };
 
 export const ChatArea = ({
   className,
   activeConversationId,
+  currentUserId
 }: ChatAreaProps) => {
   const [messageInput, setMessageInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Find active conversation
+  useEffect(() => {
+    if (!currentUserId) return;
+    socketService.connect(currentUserId);
+
+    const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
+      if (payload.message.conversationId === activeConversationId) {
+        setMessages((prev) => [...prev, payload.message]);
+      }
+    };
+
+    socketService.onMessage(handleReceiveMessage);
+
+    return () => {
+      socketService.offMessage(handleReceiveMessage);
+    };
+  }, [activeConversationId, currentUserId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const activeConversation = conversationsData.find(
     (c) => c.id === activeConversationId
   );
-
-  // Get messages for conversation
-  const messages = activeConversationId
-    ? messagesData[activeConversationId] || []
-    : [];
 
   if (!activeConversationId || !activeConversation) {
     return (
@@ -45,11 +67,33 @@ export const ChatArea = ({
   }
 
   const handleSendMessage = () => {
-    if (messageInput.trim()) {
-      // TODO: Integrate with backend API to send message
-      console.log("Sending message:", messageInput);
-      setMessageInput("");
-    }
+    if (!messageInput.trim() || !activeConversationId) return;
+    const payload: SendTextMessagePayload = {
+      conversationId: activeConversationId,
+      senderId: currentUserId,
+      receiverId: activeConversation.participantId,
+      text: messageInput.trim(),
+      type: "text",
+    };
+
+    socketService.sendText(payload);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        conversationId: payload.conversationId,
+        senderId: payload.senderId,
+        sender: "me",
+        text: payload.text,
+        isRead: false,
+        status: "sending",
+        type: payload.type,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+
+    setMessageInput("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -110,7 +154,7 @@ export const ChatArea = ({
         <div className="flex items-center gap-2">
           {/* File & Image buttons */}
           <Button
-            icon={<Paperclip size={20} color="#8B5CF6"/>}
+            icon={<Paperclip size={20} color="#8B5CF6" />}
             variant="ghost"
             size="sm"
             radius="full"
@@ -118,7 +162,7 @@ export const ChatArea = ({
             className="text-[#8B5CF6] py-3"
           />
           <Button
-            icon={<Image size={20} color="#00FFFF"/>}
+            icon={<Image size={20} color="#00FFFF" />}
             variant="ghost"
             size="sm"
             radius="full"
@@ -152,7 +196,7 @@ export const ChatArea = ({
             />
           ) : (
             <Button
-              icon={<Mic size={20} color="#8B5CF6"/>}
+              icon={<Mic size={20} color="#8B5CF6" />}
               variant="ghost"
               size="sm"
               radius="full"

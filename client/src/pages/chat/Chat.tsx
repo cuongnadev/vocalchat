@@ -79,6 +79,7 @@ const Chat = () => {
         <ChatArea
           className="flex-1 relative z-10"
           activeConversationId={activeConversationId}
+          currentUserId="1"
         />
       )}
 
