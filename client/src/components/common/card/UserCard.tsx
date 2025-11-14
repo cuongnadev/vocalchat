@@ -1,5 +1,5 @@
 import { Settings, Users } from "lucide-react";
-import { Button } from "../ui/button/Button";
+import { Button } from "../../ui/button/Button";
 
 type UserCardProps = {
   user: {
@@ -53,7 +53,7 @@ export const UserCard = ({
             size="sm"
             radius="full"
             onClick={onFriendsClick}
-            className="group"
+            className="group py-3"
           />
           <Button
             icon={
@@ -66,7 +66,7 @@ export const UserCard = ({
             size="sm"
             radius="full"
             onClick={onSettingsClick}
-            className="group"
+            className="group py-3"
           />
         </div>
       </div>

@@ -2,6 +2,7 @@ import type { Conversation } from "@/types/message";
 import { MoreVertical, Phone, Video } from "lucide-react";
 import { Button } from "../ui/button/Button";
 
+
 type HeaderProps = {
   activeConversation: Conversation | undefined;
 };
@@ -20,11 +21,10 @@ export const Header = ({ activeConversation }: HeaderProps) => {
             {activeConversation?.participant.name}
           </h3>
           <p
-            className={`text-xs ${
-              activeConversation?.participant.isOnline
+            className={`text-xs ${activeConversation?.participant.isOnline
                 ? "text-[#00FFFF]"
                 : "text-gray-400"
-            }`}
+              }`}
           >
             {activeConversation?.participant.isOnline
               ? "Active now"
@@ -34,25 +34,25 @@ export const Header = ({ activeConversation }: HeaderProps) => {
       </div>
       <div className="flex items-center gap-3">
         <Button
-          icon={<Phone size={20} />}
+          icon={<Phone size={20} color="#00FFFF" />}
           variant="ghost"
           size="sm"
           radius="full"
-          className="text-[#00FFFF]"
+          className="text-[#00FFFF] py-3"
         />
         <Button
-          icon={<Video size={20} />}
+          icon={<Video size={20} color="#8B5CF6" />}
           variant="ghost"
           size="sm"
           radius="full"
-          className="text-[#8B5CF6]"
+          className="text-[#8B5CF6] py-3"
         />
         <Button
           icon={<MoreVertical size={20} />}
           variant="ghost"
           size="sm"
           radius="full"
-          className="text-gray-300"
+          className="text-gray-300 py-3"
         />
       </div>
     </div>

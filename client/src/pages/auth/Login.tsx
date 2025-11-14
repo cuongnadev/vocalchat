@@ -1,5 +1,5 @@
 'use client';
-import { login } from '@/app/api';
+import { login } from '@/app/api/auth';
 import { Button } from '@/components/ui/button/Button';
 import type { ApiError } from '@/types/api';
 import { useNavigate } from '@tanstack/react-router';

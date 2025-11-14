@@ -1,6 +1,6 @@
 import { InputSearch } from "./InputSearch";
 import { MessageList } from "./MessageList";
-import { UserCard } from "../card/UserCard";
+import { UserCard } from "../common/card/UserCard";
 import { Plus } from "lucide-react";
 import { Button } from "../ui/button/Button";
 
@@ -35,7 +35,7 @@ export const Sidebar = ({
       <div className="shrink-0 px-5 pt-4 pb-3 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="flex items-center gap-2 text-xl font-bold text-white">
-            <img src="/logo.ico" alt="logo" className="w-6 h-6" />
+            <img src="/logo.ico" alt="logo" className="w-8 h-8" />
             VocalChat
           </h2>
           <Button
@@ -44,7 +44,7 @@ export const Sidebar = ({
             size="sm"
             radius="full"
             onClick={onNewChatClick}
-            className="shadow-lg hover:shadow-xl hover:scale-105"
+            className="shadow-lg hover:shadow-xl hover:scale-105 py-3"
           />
         </div>
         <InputSearch />

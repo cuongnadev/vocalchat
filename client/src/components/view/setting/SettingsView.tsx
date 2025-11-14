@@ -1,8 +1,8 @@
+import { Button } from "@/components/ui/button/Button";
+import { Input } from "@/components/ui/input/input";
 import type { User } from "@/types/user";
 import { Save, User as UserIcon, Mail, Phone, Lock } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../ui/button/Button";
-import { Input } from "../ui/input/input";
 
 type SettingsViewProps = {
   className?: string;

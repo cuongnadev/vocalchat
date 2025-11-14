@@ -1,7 +1,8 @@
+import { Button } from "@/components/ui/button/Button";
 import type { User } from "@/types/user";
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../ui/button/Button";
+
 
 type FriendCardProps = {
   user: User;

@@ -1,8 +1,8 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@/types/user";
-import { FriendCard } from "./FriendCard";
-import { Input } from "../ui/input/input";
+import { Input } from "@/components/ui/input/input";
+import { FriendCard } from "@/components/common/card/FriendCard";
 
 type FriendsViewProps = {
   className?: string;
