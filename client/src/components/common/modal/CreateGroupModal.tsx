@@ -1,8 +1,8 @@
+import { Button } from "@/components/ui/button/Button";
+import { Input } from "@/components/ui/input/input";
 import type { User } from "@/types/user";
 import { X, Search, Check } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../ui/button/Button";
-import { Input } from "../ui/input/input";
 
 type CreateGroupModalProps = {
   isOpen: boolean;
@@ -57,7 +57,7 @@ export const CreateGroupModal = ({
             size="sm"
             radius="full"
             onClick={onClose}
-            className="text-gray-300"
+            className="text-gray-300 py-3"
           />
         </div>
 

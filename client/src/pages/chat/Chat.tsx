@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { Sidebar } from "@/components/chat/Sidebar";
-import { FriendsView } from "@/components/friends/FriendsView";
-import { SettingsView } from "@/components/setting/SettingsView";
-import { CreateGroupModal } from "@/components/modal/CreateGroupModal";
+import { FriendsView } from "@/components/view/friends/FriendsView";
 import {
   currentUser,
   potentialFriends,
   conversationsData,
 } from "@/constants/mock-data";
 import type { User } from "@/types/user";
+import { SettingsView } from "@/components/view/setting/SettingsView";
+import { CreateGroupModal } from "@/components/common/modal/CreateGroupModal";
 
 type ViewType = "chat" | "friends" | "settings";
 

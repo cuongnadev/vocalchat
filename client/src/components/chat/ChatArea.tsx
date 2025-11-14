@@ -110,20 +110,20 @@ export const ChatArea = ({
         <div className="flex items-center gap-2">
           {/* File & Image buttons */}
           <Button
-            icon={<Paperclip size={20} />}
+            icon={<Paperclip size={20} color="#8B5CF6"/>}
             variant="ghost"
             size="sm"
             radius="full"
             onClick={() => handleFileSelect("file")}
-            className="text-[#8B5CF6]"
+            className="text-[#8B5CF6] py-3"
           />
           <Button
-            icon={<Image size={20} />}
+            icon={<Image size={20} color="#00FFFF"/>}
             variant="ghost"
             size="sm"
             radius="full"
             onClick={() => handleFileSelect("image")}
-            className="text-[#00FFFF]"
+            className="text-[#00FFFF] py-3"
           />
 
           {/* Input field */}
@@ -148,16 +148,16 @@ export const ChatArea = ({
               size="sm"
               radius="full"
               onClick={handleSendMessage}
-              className="shadow-lg hover:shadow-xl"
+              className="shadow-lg hover:shadow-xl py-3"
             />
           ) : (
             <Button
-              icon={<Mic size={20} />}
+              icon={<Mic size={20} color="#8B5CF6"/>}
               variant="ghost"
               size="sm"
               radius="full"
               onClick={handleVoiceRecord}
-              className="text-[#8B5CF6]"
+              className="text-[#8B5CF6] py-3"
             />
           )}
         </div>
