@@ -2,6 +2,7 @@ import type { User } from "./user";
 
 export type MessageSender = "me" | "them";
 export type MessageStatus = "sending" | "sent" | "read" | "failed";
+export type MessageType = 'text' | 'image' | 'file' | 'audio' | 'video';
 
 export type Message = {
   id: string;
@@ -9,12 +10,11 @@ export type Message = {
   senderId: string;
   text: string;
   sender: MessageSender;
-  timestamp: string;
-  createdAt: string;
-  updatedAt?: string;
   isRead: boolean;
   status: MessageStatus;
-  type?: "text" | "image" | "file" | "audio" | "video";
+  type?: MessageType;
+  createdAt: string;
+  updatedAt?: string;
 };
 
 export type Conversation = {

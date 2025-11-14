@@ -1,4 +1,4 @@
-import http from 'http';
+import { createServer } from 'http';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -6,13 +6,15 @@ import { Server } from 'socket.io';
 import { env } from '@/config/env.config';
 import { connectDB } from '@/libs/db';
 import AppRouters from './routes/index.route';
+import { initSocket } from './services/socket.service';
+
 
 const PORT = env.PORT;
 const CLIENT_URL = env.CLIENT_URL;
 
 const app = express();
 
-const server = http.createServer(app);
+const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
@@ -30,15 +32,7 @@ connectDB();
 // Routes
 AppRouters(app);
 
-io.on('connection', (socket) => {
-  console.log('🟢 User connected:', socket.id);
-
-  // actions
-
-  socket.on('disconnect', () => {
-    console.log('🔴 User disconnected:', socket.id);
-  });
-});
+initSocket(io);
 
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

@@ -4,7 +4,7 @@ export type ApiResponse<T> = {
   message?: string;
 };
 
-export interface User {
+export interface UserResponse {
   _id: string;
   email: string;
   name: string;
@@ -28,9 +28,9 @@ export interface FriendRequest {
 }
 
 export type RegisterResponse = ApiResponse<{ user_id: string }>;
-export type VerifyResponse = ApiResponse<{ user: User }>;
-export type UpdateProfileResponse = ApiResponse<{ user: User; token: string }>;
-export type LoginResponse = ApiResponse<{ user: User; token: string }>;
+export type VerifyResponse = ApiResponse<{ user: UserResponse }>;
+export type UpdateProfileResponse = ApiResponse<{ user: UserResponse; token: string }>;
+export type LoginResponse = ApiResponse<{ user: UserResponse; token: string }>;
 
 export interface ApiError {
   message: string;
