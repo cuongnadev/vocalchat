@@ -103,7 +103,7 @@ const Chat = () => {
   };
 
   const currentUser: User = {
-    id: user._id,
+    _id: user?._id,
     name: user.name,
     avatar: user.avatar || "https://avatar.iran.liara.run/public",
     email: user.email,
@@ -135,7 +135,6 @@ const Chat = () => {
         <ChatArea
           className="flex-1 relative z-10"
           activeConversationId={activeConversationId}
-          currentUserId="1"
         />
       )}
 

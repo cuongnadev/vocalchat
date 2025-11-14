@@ -1,5 +1,5 @@
+import type { User } from "@/types/user";
 import { requestApi } from "./request";
-import type { User } from "@/types/api";
 
 export const searchUsers = (email?: string, name?: string) => {
   return requestApi<User[]>("/user/search", {

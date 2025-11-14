@@ -3,7 +3,7 @@ import { Button } from "../../ui/button/Button";
 
 type UserCardProps = {
   user: {
-    id: string;
+    _id: string;
     name: string;
     avatar: string;
     isOnline: boolean;

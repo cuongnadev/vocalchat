@@ -8,7 +8,6 @@ import { connectDB } from '@/libs/db';
 import AppRouters from './routes/index.route';
 import { initSocket } from './services/socket.service';
 
-
 const PORT = env.PORT;
 const CLIENT_URL = env.CLIENT_URL;
 

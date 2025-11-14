@@ -8,25 +8,29 @@ import { Input } from "../ui/input/input";
 import { socketService } from "@/services/chatService";
 import type { Message } from "@/types/message";
 import type { ReceiveMessagePayload, SendTextMessagePayload } from "@/types/socket";
+import { useAuth } from "@/hooks/useAuth";
 
 type ChatAreaProps = {
   className?: string;
   activeConversationId: string | null;
-  currentUserId: string;
 };
 
 export const ChatArea = ({
   className,
   activeConversationId,
-  currentUserId
 }: ChatAreaProps) => {
+  const { user } = useAuth();
   const [messageInput, setMessageInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const activeConversation = conversationsData.find(
+    (c) => c.id === activeConversationId
+  );
+
   useEffect(() => {
-    if (!currentUserId) return;
-    socketService.connect(currentUserId);
+    if (!user?._id) return;
+    socketService.connect(user._id);
 
     const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
       if (payload.message.conversationId === activeConversationId) {
@@ -36,18 +40,18 @@ export const ChatArea = ({
 
     socketService.onMessage(handleReceiveMessage);
 
+    console.log('conversation', activeConversationId);
+
     return () => {
       socketService.offMessage(handleReceiveMessage);
     };
-  }, [activeConversationId, currentUserId]);
+  }, [activeConversationId, user?._id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const activeConversation = conversationsData.find(
-    (c) => c.id === activeConversationId
-  );
+  
 
   if (!activeConversationId || !activeConversation) {
     return (
@@ -70,7 +74,7 @@ export const ChatArea = ({
     if (!messageInput.trim() || !activeConversationId) return;
     const payload: SendTextMessagePayload = {
       conversationId: activeConversationId,
-      senderId: currentUserId,
+      senderId: user?._id as string,
       receiverId: activeConversation.participantId,
       text: messageInput.trim(),
       type: "text",

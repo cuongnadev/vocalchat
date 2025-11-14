@@ -37,7 +37,7 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
               isMe ? "text-right" : "text-left"
             }`}
           >
-            {message.timestamp}
+            {message.updatedAt}
           </span>
         </div>
       </div>

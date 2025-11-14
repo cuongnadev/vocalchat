@@ -28,7 +28,6 @@ export default function Login() {
       }
 
       saveAuth(response.data.token, remember, 168);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
 
       navigate({ to: "/chat" });
     } catch (err) {

@@ -9,7 +9,7 @@ type SidebarProps = {
   activeConversationId: string | null;
   onSelectConversation: (id: string) => void;
   currentUser: {
-    id: string;
+    _id: string;
     name: string;
     avatar: string;
     isOnline: boolean;

@@ -1,8 +1,8 @@
 import { getCurrentUser } from "@/app/api";
-import type { User } from "@/types/api";
 import { useEffect, useState } from "react";
 import { isLoggedIn, logout } from "@/utils/auth";
 import { useNavigate } from "@tanstack/react-router";
+import type { User } from "@/types/user";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
