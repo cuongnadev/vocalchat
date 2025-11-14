@@ -35,6 +35,12 @@ export interface UserStatusPayload {
   online: boolean;
 }
 
+export interface ConversationCreatedPayload {
+  conversationId: string;
+  participantId: string;
+  friendId: string;
+}
+
 export interface ClientToServerEvents {
   "message:send:text": (payload: SendTextMessagePayload) => void;
   "message:send:file": (payload: SendFileMessagePayload) => void;
@@ -47,4 +53,5 @@ export interface ServerToClientEvents {
   "message:receive": (payload: ReceiveMessagePayload) => void;
   "typing:update": (payload: TypingPayload) => void;
   "user:status": (payload: UserStatusPayload) => void;
+  "conversation:created": (payload: ConversationCreatedPayload) => void;
 }

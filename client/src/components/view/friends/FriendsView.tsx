@@ -1,7 +1,7 @@
 import { Search, UserCheck, UserPlus, X, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { User } from "@/types/user";
-import type { User as ApiUser, FriendRequest } from "@/types/api";
+import type { FriendRequest, UserResponse } from "@/types/api";
 import { Input } from "@/components/ui/input/input";
 import { FriendCard } from "@/components/common/card/FriendCard";
 import { Button } from "@/components/ui/button/Button";
@@ -29,7 +29,7 @@ export const FriendsView = ({
 }: FriendsViewProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("find");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<ApiUser[]>([]);
+  const [searchResults, setSearchResults] = useState<UserResponse[]>([]);
   const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -112,12 +112,12 @@ export const FriendsView = ({
   };
 
   const convertApiUserToUser = (
-    apiUser: ApiUser
+    apiUser: UserResponse
   ): User & {
     relationshipStatus?: "none" | "friends" | "pending";
     isSender?: boolean;
   } => ({
-    id: apiUser._id,
+    _id: apiUser._id,
     name: apiUser.name,
     avatar: apiUser.avatar || "https://avatar.iran.liara.run/public",
     email: apiUser.email,

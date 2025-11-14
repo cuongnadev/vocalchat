@@ -7,7 +7,10 @@ import { Button } from "../ui/button/Button";
 import { Input } from "../ui/input/input";
 import { socketService } from "@/services/chatService";
 import type { Message } from "@/types/message";
-import type { ReceiveMessagePayload, SendTextMessagePayload } from "@/types/socket";
+import type {
+  ReceiveMessagePayload,
+  SendTextMessagePayload,
+} from "@/types/socket";
 import { useAuth } from "@/hooks/useAuth";
 
 type ChatAreaProps = {
@@ -40,7 +43,7 @@ export const ChatArea = ({
 
     socketService.onMessage(handleReceiveMessage);
 
-    console.log('conversation', activeConversationId);
+    console.log("conversation", activeConversationId);
 
     return () => {
       socketService.offMessage(handleReceiveMessage);
@@ -50,8 +53,6 @@ export const ChatArea = ({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  
 
   if (!activeConversationId || !activeConversation) {
     return (

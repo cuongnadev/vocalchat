@@ -20,15 +20,15 @@ export const FriendCard = ({
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAdd = useCallback(() => {
-    onAddFriend(user.id);
+    onAddFriend(user._id);
     setIsAdded(true);
-  }, [onAddFriend, user.id]);
+  }, [onAddFriend, user._id]);
 
   const handleUnfriend = useCallback(() => {
     if (onUnfriend) {
-      onUnfriend(user.id);
+      onUnfriend(user._id);
     }
-  }, [onUnfriend, user.id]);
+  }, [onUnfriend, user._id]);
 
   const getButtonProps = useCallback(() => {
     return user.relationshipStatus === "friends"

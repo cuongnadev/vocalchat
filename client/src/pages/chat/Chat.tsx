@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { FriendsView } from "@/components/view/friends/FriendsView";
@@ -10,6 +10,8 @@ import { conversationsData } from "@/constants/mock-data";
 import type { User } from "@/types/user";
 import { useToast } from "@/hooks/useToast";
 import { Toast } from "@/components/ui/toast/Toast";
+import { socketService } from "@/services/chatService";
+import type { ConversationCreatedPayload } from "@/types/socket";
 
 type ViewType = "chat" | "friends" | "settings";
 
@@ -21,6 +23,26 @@ const Chat = () => {
   >(null);
   const [currentView, setCurrentView] = useState<ViewType>("chat");
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    const handleConversationCreated = (payload: ConversationCreatedPayload) => {
+      console.log("New conversation created:", payload);
+      showToast(
+        "success",
+        "New conversation created! You can now start chatting."
+      );
+      // TODO: Refresh conversation list from API instead of using mock data
+      // Can call API to get new conversation list
+    };
+
+    socketService.onConversationCreated(handleConversationCreated);
+
+    return () => {
+      socketService.offConversationCreated(handleConversationCreated);
+    };
+  }, [user?._id, showToast]);
 
   if (loading) {
     return (

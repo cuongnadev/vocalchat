@@ -1,6 +1,7 @@
 import { UserService } from '@/services/user.service';
 import { Request, Response } from 'express';
 import { hashPassword, comparePassword } from '@/libs/hash';
+import { getIO, getOnlineUsers } from '@/services/socket.service';
 
 export const UserController = {
   async searchUsers(req: Request, res: Response) {
@@ -130,11 +131,37 @@ export const UserController = {
     }
 
     try {
-      const friendRequest = await UserService.acceptFriendRequest(id, userId);
+      const result = await UserService.acceptFriendRequest(id, userId);
+
+      try {
+        const io = getIO();
+        const onlineUsers = getOnlineUsers();
+
+        const requesterSocketId = onlineUsers.get(result.requesterId);
+        if (requesterSocketId) {
+          io.to(requesterSocketId).emit('conversation:created', {
+            conversationId: result.conversationId,
+            participantId: result.requesterId,
+            friendId: result.recipientId,
+          });
+        }
+
+        const recipientSocketId = onlineUsers.get(result.recipientId);
+        if (recipientSocketId) {
+          io.to(recipientSocketId).emit('conversation:created', {
+            conversationId: result.conversationId,
+            participantId: result.recipientId,
+            friendId: result.requesterId,
+          });
+        }
+      } catch (socketError) {
+        console.error('Failed to emit socket event:', socketError);
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Friend request accepted',
-        data: friendRequest,
+        data: { friendRequest: result.friendRequest, conversationId: result.conversationId },
       });
     } catch (error: any) {
       console.log(error);

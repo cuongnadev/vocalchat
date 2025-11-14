@@ -13,6 +13,19 @@ import { Message } from '@/models/message.model';
 
 const onlineUsers = new Map<string, string>();
 
+export function getOnlineUsers() {
+  return onlineUsers;
+}
+
+let ioInstance: Server<ClientToServerEvents, ServerToClientEvents> | null = null;
+
+export function getIO() {
+  if (!ioInstance) {
+    throw new Error('Socket.io not initialized');
+  }
+  return ioInstance;
+}
+
 type SendMessagePayload = SendTextMessagePayload | SendFileMessagePayload;
 
 async function handleSendMessage(
@@ -42,6 +55,8 @@ async function handleSendMessage(
 }
 
 export function initSocket(io: Server<ClientToServerEvents, ServerToClientEvents>) {
+  ioInstance = io;
+
   io.on('connection', async (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
     console.log('Socket connected: ', socket.id);
 

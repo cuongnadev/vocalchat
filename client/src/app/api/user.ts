@@ -1,8 +1,9 @@
 import type { User } from "@/types/user";
+import type { UserResponse } from "@/types/api";
 import { requestApi } from "./request";
 
 export const searchUsers = (email?: string, name?: string) => {
-  return requestApi<User[]>("/user/search", {
+  return requestApi<UserResponse[]>("/user/search", {
     method: "POST",
     body: JSON.stringify({ email, name }),
   });

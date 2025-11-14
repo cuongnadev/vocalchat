@@ -1,5 +1,6 @@
 import { User } from '@/models/user.model';
 import { Friend } from '@/models/friend.model';
+import { Conversation } from '@/models/conversation.model';
 import { IUser } from '@/types/user';
 import { Types } from 'mongoose';
 import { RegexFilter } from '@/types/data';
@@ -88,7 +89,31 @@ export const UserService = {
     friendRequest.status = 'accepted';
     await friendRequest.save();
 
-    return friendRequest;
+    const requesterId = friendRequest.requester.toString();
+    const recipientId = friendRequest.recipient.toString();
+
+    const existingConversation = await Conversation.findOne({
+      participants: { $all: [new Types.ObjectId(requesterId), new Types.ObjectId(recipientId)] },
+      $expr: { $eq: [{ $size: '$participants' }, 2] },
+    });
+
+    let conversationId: string;
+
+    if (existingConversation) {
+      conversationId = (existingConversation._id as Types.ObjectId).toString();
+    } else {
+      const newConversation = await Conversation.create({
+        participants: [new Types.ObjectId(requesterId), new Types.ObjectId(recipientId)],
+        lastMessage: null,
+        unreadCount: 0,
+        isPinned: false,
+        isMuted: false,
+        isArchived: false,
+      });
+      conversationId = (newConversation._id as Types.ObjectId).toString();
+    }
+
+    return { friendRequest, conversationId, requesterId, recipientId };
   },
 
   async rejectFriendRequest(requestId: string, userId: string) {
