@@ -8,22 +8,25 @@ type SettingsViewProps = {
   className?: string;
   currentUser: User;
   onSaveSettings: (updatedUser: Partial<User>) => void;
+  showToast: (type: "success" | "error" | "info", message: string) => void;
 };
 
 export const SettingsView = ({
   className,
   currentUser,
   onSaveSettings,
+  showToast,
 }: SettingsViewProps) => {
   const [formData, setFormData] = useState({
     name: currentUser.name,
-    email: currentUser.email,
+    email: currentUser.email || "",
     avatar: currentUser.avatar,
-    phone: "",
+    phone: currentUser.phone || "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -32,16 +35,47 @@ export const SettingsView = ({
     });
   };
 
-  const handleSave = () => {
-    const updates: Partial<User & { oldPassword: string }> = {
-      name: formData.name,
-      email: formData.email,
-      avatar: formData.avatar,
-      oldPassword: formData.currentPassword,
-      password: formData.newPassword,
-    };
+  const handleSave = async () => {
+    if (
+      formData.newPassword &&
+      formData.newPassword !== formData.confirmPassword
+    ) {
+      showToast("error", "New passwords do not match");
+      return;
+    }
 
-    onSaveSettings(updates);
+    if (formData.newPassword && formData.newPassword.length < 6) {
+      showToast("error", "Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const updates: Partial<User> & {
+        oldPassword?: string;
+        password?: string;
+      } = {
+        name: formData.name,
+        avatar: formData.avatar,
+        phone: formData.phone,
+      };
+
+      if (formData.newPassword) {
+        updates.oldPassword = formData.currentPassword;
+        updates.password = formData.newPassword;
+      }
+
+      await onSaveSettings(updates);
+
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,16 +104,30 @@ export const SettingsView = ({
 
             {/* Avatar */}
             <div className="mb-6 text-center">
-              <div className="inline-block relative">
+              <div className="inline-block relative group cursor-pointer">
                 <img
                   src={formData.avatar}
                   alt="Avatar"
                   className="rounded-full w-24 h-24 object-cover border-4 border-white/20"
                 />
-                <div className="absolute bottom-0 right-0 w-7 h-7 bg-[#00FFFF] rounded-full border-2 border-[#0a001f]"></div>
+                <div className="absolute bottom-0 right-0 w-7 h-7 bg-[#00FFFF] rounded-full border-2 border-[#0a001f] flex items-center justify-center">
+                  {currentUser.isOnline && (
+                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
-                Click to change avatar
+              <Input
+                type="text"
+                name="avatar"
+                placeholder="Enter avatar URL"
+                value={formData.avatar}
+                onChange={handleInputChange}
+                variant="third"
+                radius="lg"
+                className="mt-2 max-w-sm mx-auto"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Enter image URL for your avatar
               </p>
             </div>
 
@@ -109,6 +157,7 @@ export const SettingsView = ({
               variant="third"
               radius="lg"
               className="mb-4"
+              disabled
             />
 
             {/* Phone */}
@@ -174,13 +223,14 @@ export const SettingsView = ({
 
           {/* Save Button */}
           <Button
-            text="Save Changes"
+            text={loading ? "Saving..." : "Save Changes"}
             icon={<Save size={20} />}
             iconPosition="left"
             variant="primary"
             size="lg"
             radius="lg"
             onClick={handleSave}
+            disabled={loading}
             className="w-full shadow-lg hover:shadow-xl"
           />
         </div>
