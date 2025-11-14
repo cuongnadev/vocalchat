@@ -1,5 +1,6 @@
 import type { Conversation } from "@/types/message";
 import { MoreVertical, Phone, Video } from "lucide-react";
+import { Button } from "../ui/button/Button";
 
 type HeaderProps = {
   activeConversation: Conversation | undefined;
@@ -32,15 +33,27 @@ export const Header = ({ activeConversation }: HeaderProps) => {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <Phone size={20} className="text-[#00FFFF]" />
-        </button>
-        <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <Video size={20} className="text-[#8B5CF6]" />
-        </button>
-        <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <MoreVertical size={20} className="text-gray-300" />
-        </button>
+        <Button
+          icon={<Phone size={20} />}
+          variant="ghost"
+          size="sm"
+          radius="full"
+          className="text-[#00FFFF]"
+        />
+        <Button
+          icon={<Video size={20} />}
+          variant="ghost"
+          size="sm"
+          radius="full"
+          className="text-[#8B5CF6]"
+        />
+        <Button
+          icon={<MoreVertical size={20} />}
+          variant="ghost"
+          size="sm"
+          radius="full"
+          className="text-gray-300"
+        />
       </div>
     </div>
   );

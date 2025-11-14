@@ -3,6 +3,8 @@ import { Send, Mic, Image, Paperclip } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { conversationsData, messagesData } from "@/constants/mock-data";
 import { Header } from "./Header";
+import { Button } from "../ui/button/Button";
+import { Input } from "../ui/input/input";
 
 type ChatAreaProps = {
   className?: string;
@@ -107,48 +109,56 @@ export const ChatArea = ({
       <div className="border-t border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4">
         <div className="flex items-center gap-2">
           {/* File & Image buttons */}
-          <button
+          <Button
+            icon={<Paperclip size={20} />}
+            variant="ghost"
+            size="sm"
+            radius="full"
             onClick={() => handleFileSelect("file")}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            title="Attach file"
-          >
-            <Paperclip size={20} className="text-[#8B5CF6]" />
-          </button>
-          <button
+            className="text-[#8B5CF6]"
+          />
+          <Button
+            icon={<Image size={20} />}
+            variant="ghost"
+            size="sm"
+            radius="full"
             onClick={() => handleFileSelect("image")}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            title="Send image"
-          >
-            <Image size={20} className="text-[#00FFFF]" />
-          </button>
+            className="text-[#00FFFF]"
+          />
 
           {/* Input field */}
-          <input
-            type="text"
-            placeholder="Aa"
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-full outline-none focus:ring-2 focus:ring-[#00FFFF] transition-colors placeholder-gray-400 text-white"
-          />
+          <div className="flex-1">
+            <Input
+              type="text"
+              placeholder="Aa"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="w-full"
+              radius="full"
+              variant="third"
+            />
+          </div>
 
           {/* Voice or Send button */}
           {messageInput.trim() ? (
-            <button
+            <Button
+              icon={<Send size={20} />}
+              variant="primary"
+              size="sm"
+              radius="full"
               onClick={handleSendMessage}
-              className="p-3 bg-linear-to-r from-[#00FFFF] to-[#8B5CF6] hover:from-[#00FFFF]/80 hover:to-[#8B5CF6]/80 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-              title="Send message"
-            >
-              <Send size={20} className="text-white" />
-            </button>
+              className="shadow-lg hover:shadow-xl"
+            />
           ) : (
-            <button
+            <Button
+              icon={<Mic size={20} />}
+              variant="ghost"
+              size="sm"
+              radius="full"
               onClick={handleVoiceRecord}
-              className="p-3 hover:bg-white/10 rounded-full transition-colors"
-              title="Record voice message"
-            >
-              <Mic size={20} className="text-[#8B5CF6]" />
-            </button>
+              className="text-[#8B5CF6]"
+            />
           )}
         </div>
       </div>
