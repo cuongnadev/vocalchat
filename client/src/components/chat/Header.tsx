@@ -12,21 +12,21 @@ export const Header = ({ activeConversation }: HeaderProps) => {
     <div className="border-b border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <img
-          src={activeConversation?.participant.avatar}
-          alt={activeConversation?.participant.name}
+          src={activeConversation?.participants[0].avatar}
+          alt={activeConversation?.participants[0].name}
           className="rounded-full w-10 h-10 object-cover border-2 border-white/20"
         />
         <div>
           <h3 className="font-semibold text-white">
-            {activeConversation?.participant.name}
+            {activeConversation?.participants[0].name}
           </h3>
           <p
-            className={`text-xs ${activeConversation?.participant.isOnline
+            className={`text-xs ${activeConversation?.participants[0].isOnline
                 ? "text-[#00FFFF]"
                 : "text-gray-400"
               }`}
           >
-            {activeConversation?.participant.isOnline
+            {activeConversation?.participants[0].isOnline
               ? "Active now"
               : "Offline"}
           </p>

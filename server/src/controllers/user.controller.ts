@@ -341,4 +341,84 @@ export const UserController = {
       return res.status(400).json({ success: false, message: error.message, data: null });
     }
   },
+  async getConversations(req: Request, res: Response) {
+    const userId = req.user?.userId;
+
+    console.log('user_id', userId);
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized', data: null });
+    }
+
+    try {
+      const conversations = await UserService.getConversations(userId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Get conversations successfully',
+        data: conversations.map((conv) => ({
+          _id: conv._id,
+          participants: conv.participants
+            .map((p) => ({
+              _id: p._id,
+              name: p.name,
+              avatar: p.avatar,
+            }))
+            .filter((p) => p._id.toString() !== userId),
+          lastMessage: conv.lastMessage || null,
+          unreadCount: conv.unreadCount,
+          isPinned: conv.isPinned,
+          isMuted: conv.isMuted,
+          isArchived: conv.isArchived,
+        })),
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ success: false, message: 'Server error', data: error });
+    }
+  },
+  async getConversationById(req: Request, res: Response) {
+    const userId = req.user?.userId;
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized', data: null });
+    }
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Conversation ID is required',
+        data: null,
+      });
+    }
+
+    try {
+      const conversation = await UserService.getConversationById(id, userId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Get conversation successfully',
+        data: {
+          _id: conversation._id,
+          lastMessage: conversation.lastMessage || null,
+          isPinned: conversation.isPinned,
+          isMuted: conversation.isMuted,
+          isArchived: conversation.isArchived,
+
+          participants: conversation.participants
+            .map((p) => ({
+              _id: p._id,
+              name: p.name,
+              avatar: p.avatar,
+            }))
+            .filter((p) => p._id.toString() !== userId),
+          unreadCount: conversation.unreadCount,
+        },
+      });
+    } catch (error: any) {
+      console.log(error);
+      return res.status(400).json({ success: false, message: error.message, data: null });
+    }
+  },
 };

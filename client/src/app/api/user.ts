@@ -1,6 +1,7 @@
 import type { User } from "@/types/user";
 import type { UserResponse } from "@/types/api";
 import { requestApi } from "./request";
+import type { Conversation } from "@/types/message";
 
 export const searchUsers = (email?: string, name?: string) => {
   return requestApi<UserResponse[]>("/user/search", {
@@ -83,3 +84,16 @@ export const unfriend = (targetUserId: string) => {
     body: JSON.stringify({ targetUserId }),
   });
 };
+
+export const getConversations = () => {
+  return requestApi<Conversation[]>("/user/conversations", {
+    method: "GET",
+  });
+};
+
+export const getConversationById = (id: string) => {
+  return requestApi<Conversation>(`/user/conversations/${id}`, {
+    method: "GET",
+  });
+};
+

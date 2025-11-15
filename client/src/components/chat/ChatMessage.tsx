@@ -1,4 +1,5 @@
 import type { Message } from "@/types/message";
+import { formatTime } from "@/utils/formatTime";
 
 type ChatMessageProps = {
   message: Message;
@@ -37,7 +38,7 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
               isMe ? "text-right" : "text-left"
             }`}
           >
-            {message.updatedAt}
+            { formatTime(message.updatedAt) }
           </span>
         </div>
       </div>

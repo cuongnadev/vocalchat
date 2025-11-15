@@ -1,17 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Send, Mic, Image, Paperclip } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
-import { conversationsData } from "@/constants/mock-data";
 import { Header } from "./Header";
 import { Button } from "../ui/button/Button";
 import { Input } from "../ui/input/input";
 import { socketService } from "@/services/chatService";
-import type { Message } from "@/types/message";
-import type {
-  ReceiveMessagePayload,
-  SendTextMessagePayload,
-} from "@/types/socket";
+import type { Conversation, Message } from "@/types/message";
+import type { ReceiveMessagePayload, SendTextMessagePayload } from "@/types/socket";
 import { useAuth } from "@/hooks/useAuth";
+import { getConversationById } from "@/app/api";
 
 type ChatAreaProps = {
   className?: string;
@@ -25,11 +22,28 @@ export const ChatArea = ({
   const { user } = useAuth();
   const [messageInput, setMessageInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [activeConversation, setActiveConversation] = useState<Conversation>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activeConversation = conversationsData.find(
-    (c) => c.id === activeConversationId
-  );
+  useEffect(() => {
+    if (!activeConversationId) return;
+
+    const fetchConversation = async () => {
+      try {
+        const response = await getConversationById(activeConversationId);
+
+        if (!response.success) {
+          throw new Error(response.message || "Failed to get conversation");
+        }
+
+        setActiveConversation(response.data);
+      } catch (error) {
+        console.log("❌ Error fetching conversation:", error);
+      }
+    };
+
+    fetchConversation();
+  }, [activeConversationId]);
 
   useEffect(() => {
     if (!user?._id) return;
@@ -42,8 +56,6 @@ export const ChatArea = ({
     };
 
     socketService.onMessage(handleReceiveMessage);
-
-    console.log("conversation", activeConversationId);
 
     return () => {
       socketService.offMessage(handleReceiveMessage);
@@ -95,6 +107,7 @@ export const ChatArea = ({
         status: "sending",
         type: payload.type,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
     ]);
 
@@ -144,7 +157,7 @@ export const ChatArea = ({
             <ChatMessage
               key={message.id}
               message={message}
-              avatar={activeConversation.participant.avatar}
+              avatar={activeConversation.participants[0].avatar}
             />
           ))
         ) : (

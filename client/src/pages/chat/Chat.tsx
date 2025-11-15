@@ -6,7 +6,6 @@ import { SettingsView } from "@/components/view/setting/SettingsView";
 import { CreateGroupModal } from "@/components/common/modal/CreateGroupModal";
 import { useAuth } from "@/hooks/useAuth";
 import { sendFriendRequest, updateUserProfile, unfriend } from "@/app/api";
-import { conversationsData } from "@/constants/mock-data";
 import type { User } from "@/types/user";
 import { useToast } from "@/hooks/useToast";
 import { Toast } from "@/components/ui/toast/Toast";
@@ -57,7 +56,7 @@ const Chat = () => {
   }
 
   const handleSelectConversation = (conversationId: string) => {
-    setActiveConversationId(conversationId);
+    setActiveConversationId(conversationId); 
     setCurrentView("chat");
   };
 
@@ -132,8 +131,8 @@ const Chat = () => {
     isOnline: user.isOnline,
   };
 
-  // Get available users for group creation
-  const availableUsers = conversationsData.map((conv) => conv.participant);
+  // // Get available users for group creation
+  // const availableUsers = conversationsData.map((conv) => conv.participant);
 
   return (
     <div className="relative flex h-screen bg-linear-to-br from-[#0a001f] via-[#10002b] to-[#1b0038] overflow-hidden">
@@ -179,12 +178,12 @@ const Chat = () => {
       )}
 
       {/* Create Group Modal */}
-      <CreateGroupModal
+      {/* <CreateGroupModal
         isOpen={isCreateGroupModalOpen}
         onClose={() => setIsCreateGroupModalOpen(false)}
         availableUsers={availableUsers}
         onCreateGroup={handleCreateGroup}
-      />
+      /> */}
 
       <style
         dangerouslySetInnerHTML={{

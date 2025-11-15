@@ -20,8 +20,7 @@ type ConversationCreatedCallback = (
 ) => void;
 
 class SocketService {
-  private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
-``    null;
+  private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 
   connect(userId: string) {
     if (this.socket) return;

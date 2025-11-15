@@ -227,4 +227,30 @@ export const UserService = {
 
     return { message: 'Unfriended successfully' };
   },
+  async getConversations(userId: string) {
+    if (!userId) throw new Error('User ID is required');
+
+    const conversations = await Conversation.find({ participants: userId })
+      .populate('participants', 'name avatar _id')
+      .populate('lastMessage')
+      .sort({ updatedAt: -1 });
+
+    return conversations;
+  },
+  async getConversationById(conversationId: string, userId: string) {
+    if (!conversationId) throw new Error('Conversation ID is required');
+
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      participants: userId,
+    })
+      .populate('participants', '_id name avatar')
+      .populate('lastMessage');
+
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    return conversation;
+  },
 };

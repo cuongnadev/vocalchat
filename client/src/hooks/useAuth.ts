@@ -16,20 +16,13 @@ export const useAuth = () => {
         return;
       }
 
-      const cachedUser = localStorage.getItem("user");
-      if (cachedUser) {
-        try {
-          setUser(JSON.parse(cachedUser));
-        } catch (e) {
-          console.error("Error parsing cached user:", e);
-        }
-      }
-
       try {
         const response = await getCurrentUser();
         if (response.success) {
           setUser(response.data);
-          localStorage.setItem("user", JSON.stringify(response.data));
+        } else {
+          logout();
+          navigate({ to: "/auth/login" });
         }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -48,7 +41,6 @@ export const useAuth = () => {
       const response = await getCurrentUser();
       if (response.success) {
         setUser(response.data);
-        localStorage.setItem("user", JSON.stringify(response.data));
       }
     } catch (error) {
       console.error("Error refreshing user:", error);

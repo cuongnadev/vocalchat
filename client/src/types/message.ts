@@ -12,15 +12,15 @@ export type Message = {
   sender: MessageSender;
   isRead: boolean;
   status: MessageStatus;
-  type?: MessageType;
+  type: MessageType;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
 };
 
 export type Conversation = {
-  id: string;
+  _id: string;
   participantId: string;
-  participant: User;
+  participants: User[];
   lastMessage: Message | null;
   unreadCount: number;
   isPinned: boolean;

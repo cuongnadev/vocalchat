@@ -1,10 +1,7 @@
 import type { ApiResponse } from "@/types/api";
+import { getToken } from "@/utils/auth";
 
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-function getToken(): string | null {
-  return localStorage.getItem("token") || sessionStorage.getItem("token");
-}
 
 export async function requestApi<T>(
   endpoint: string,
