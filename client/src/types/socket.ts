@@ -1,4 +1,4 @@
-import type { Message, MessageType } from "./message";
+import type { MessageResponse, MessageType } from "./message";
 
 export interface SendTextMessagePayload {
   conversationId: string;
@@ -20,7 +20,7 @@ export interface SendFileMessagePayload {
 }
 
 export interface ReceiveMessagePayload {
-  message: Message;
+  message: MessageResponse;
 }
 
 export interface TypingPayload {

@@ -4,11 +4,12 @@ import { ChatMessage } from "./ChatMessage";
 import { Header } from "./Header";
 import { Button } from "../ui/button/Button";
 import { Input } from "../ui/input/input";
-import { socketService } from "@/services/chatService";
+import { socketService } from "@/services/socketService";
 import type { Conversation, Message } from "@/types/message";
 import type { ReceiveMessagePayload, SendTextMessagePayload } from "@/types/socket";
 import { useAuth } from "@/hooks/useAuth";
 import { getConversationById } from "@/app/api";
+import { chatService } from "@/services/chatService";
 
 type ChatAreaProps = {
   className?: string;
@@ -31,6 +32,14 @@ export const ChatArea = ({
     const fetchConversation = async () => {
       try {
         const response = await getConversationById(activeConversationId);
+        const responseMessages = await chatService.getMessagesByConversationId(activeConversationId);
+
+        console.log(responseMessages);
+
+        setMessages(responseMessages.data.map((msg) => ({
+          ...msg,
+          sender: msg.senderId === user?._id ? "me" : "them",
+        })));
 
         if (!response.success) {
           throw new Error(response.message || "Failed to get conversation");
@@ -43,7 +52,7 @@ export const ChatArea = ({
     };
 
     fetchConversation();
-  }, [activeConversationId]);
+  }, [activeConversationId, user?._id]);
 
   useEffect(() => {
     if (!user?._id) return;
@@ -51,7 +60,13 @@ export const ChatArea = ({
 
     const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
       if (payload.message.conversationId === activeConversationId) {
-        setMessages((prev) => [...prev, payload.message]);
+
+        const messagesFormatted: Message = {
+          ...payload.message,
+          sender: payload.message.senderId === user?._id ? "me" : "them",
+        };
+
+        setMessages((prev) => [...prev, messagesFormatted]);
       }
     };
 
@@ -98,7 +113,7 @@ export const ChatArea = ({
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        _id: Date.now().toString(),
         conversationId: payload.conversationId,
         senderId: payload.senderId,
         sender: "me",
@@ -155,7 +170,7 @@ export const ChatArea = ({
         {messages.length > 0 ? (
           messages.map((message) => (
             <ChatMessage
-              key={message.id}
+              key={message._id}
               message={message}
               avatar={activeConversation.participants[0].avatar}
             />

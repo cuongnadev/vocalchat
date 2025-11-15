@@ -5,7 +5,7 @@ export type MessageStatus = "sending" | "sent" | "read" | "failed";
 export type MessageType = 'text' | 'image' | 'file' | 'audio' | 'video';
 
 export type Message = {
-  id: string;
+  _id: string;
   conversationId: string;
   senderId: string;
   text: string;
@@ -17,11 +17,13 @@ export type Message = {
   updatedAt: string;
 };
 
+export type MessageResponse = Omit<Message, "sender">;
+
 export type Conversation = {
   _id: string;
   participantId: string;
   participants: User[];
-  lastMessage: Message | null;
+  lastMessage: MessageResponse | null;
   unreadCount: number;
   isPinned: boolean;
   isMuted: boolean;

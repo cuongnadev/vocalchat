@@ -9,7 +9,7 @@ import { sendFriendRequest, updateUserProfile, unfriend } from "@/app/api";
 import type { User } from "@/types/user";
 import { useToast } from "@/hooks/useToast";
 import { Toast } from "@/components/ui/toast/Toast";
-import { socketService } from "@/services/chatService";
+import { socketService } from "@/services/socketService";
 import type { ConversationCreatedPayload } from "@/types/socket";
 
 type ViewType = "chat" | "friends" | "settings";
@@ -56,7 +56,7 @@ const Chat = () => {
   }
 
   const handleSelectConversation = (conversationId: string) => {
-    setActiveConversationId(conversationId); 
+    setActiveConversationId(conversationId);
     setCurrentView("chat");
   };
 
