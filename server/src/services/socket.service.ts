@@ -7,10 +7,13 @@ import type {
   TypingPayload,
   UserStatusPayload,
   ReceiveMessagePayload,
+  ConversationUpdatedPayload,
+  MarkMessagesReadPayload,
 } from '@/types/socket';
 import type { IMessage, MessageType } from '@/types/message';
 import { Message } from '@/models/message.model';
 import { Conversation } from '@/models/conversation.model';
+import { User } from '@/models/user.model';
 
 const onlineUsers = new Map<string, string>();
 
@@ -49,13 +52,46 @@ async function handleSendMessage(
   const message = new Message(messageData);
   await message.save();
 
+  // Update conversation with lastMessage
   await Conversation.findByIdAndUpdate(payload.conversationId, { lastMessage: message._id });
 
+  // Get conversation to count unread messages
+  const conversation = await Conversation.findById(payload.conversationId).populate('participants');
+
+  if (!conversation) {
+    console.error('Conversation not found');
+    return;
+  }
+
+  // Send message to receivers
   for (const receive of payload.receiverId) {
     const receiverSocketId = onlineUsers.get(receive._id);
 
     if (receiverSocketId) {
       io.to(receiverSocketId).emit('message:receive', { message } as ReceiveMessagePayload);
+    }
+  }
+
+  // Emit conversation updated event to all participants
+  const participantIds = conversation.participants.map((p: any) => p._id.toString());
+
+  for (const participantId of participantIds) {
+    const socketId = onlineUsers.get(participantId);
+
+    if (socketId) {
+      // Count unread messages for this participant
+      const unreadCount = await Message.countDocuments({
+        conversationId: payload.conversationId,
+        senderId: { $ne: participantId },
+        isRead: false,
+      });
+
+      io.to(socketId).emit('conversation:updated', {
+        conversationId: payload.conversationId,
+        lastMessage: message,
+        unreadCount,
+        participantIds,
+      } as ConversationUpdatedPayload);
     }
   }
 }
@@ -74,7 +110,19 @@ export function initSocket(io: Server<ClientToServerEvents, ServerToClientEvents
     }
 
     onlineUsers.set(userId, socket.id);
+
+    // Update user status in database
+    await User.findByIdAndUpdate(userId, { isOnline: true });
+
+    // Broadcast this user's online status to all clients
     io.emit('user:status', { userId, online: true } as UserStatusPayload);
+
+    // Send status of all currently online users to the newly connected user
+    for (const [onlineUserId] of onlineUsers) {
+      if (onlineUserId !== userId) {
+        socket.emit('user:status', { userId: onlineUserId, online: true } as UserStatusPayload);
+      }
+    }
 
     socket.on('message:send:text', (payload: SendTextMessagePayload) =>
       handleSendMessage(io, payload),
@@ -91,8 +139,62 @@ export function initSocket(io: Server<ClientToServerEvents, ServerToClientEvents
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('messages:mark:read', async (payload: MarkMessagesReadPayload) => {
+      try {
+        // Mark all unread messages in this conversation as read
+        await Message.updateMany(
+          {
+            conversationId: payload.conversationId,
+            senderId: { $ne: payload.userId },
+            isRead: false,
+          },
+          { isRead: true },
+        );
+
+        // Get conversation to update all participants
+        const conversation = await Conversation.findById(payload.conversationId).populate(
+          'participants',
+        );
+
+        if (conversation) {
+          const participantIds = conversation.participants.map((p: any) => p._id.toString());
+
+          // Notify all participants about the updated unread count
+          for (const participantId of participantIds) {
+            const socketId = onlineUsers.get(participantId);
+
+            if (socketId) {
+              // Count unread messages for this participant
+              const unreadCount = await Message.countDocuments({
+                conversationId: payload.conversationId,
+                senderId: { $ne: participantId },
+                isRead: false,
+              });
+
+              const lastMessage = await Message.findById(conversation.lastMessage);
+
+              if (lastMessage) {
+                io.to(socketId).emit('conversation:updated', {
+                  conversationId: payload.conversationId,
+                  lastMessage,
+                  unreadCount,
+                  participantIds,
+                } as ConversationUpdatedPayload);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    });
+
+    socket.on('disconnect', async () => {
       onlineUsers.delete(userId);
+
+      // Update user status in database
+      await User.findByIdAndUpdate(userId, { isOnline: false });
+
       io.emit('user:status', { userId, online: false } as UserStatusPayload);
     });
   });

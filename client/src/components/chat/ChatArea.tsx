@@ -6,7 +6,11 @@ import { Button } from "../ui/button/Button";
 import { Input } from "../ui/input/input";
 import { socketService } from "@/services/socketService";
 import type { Conversation, Message } from "@/types/message";
-import type { ReceiveMessagePayload, SendTextMessagePayload } from "@/types/socket";
+import type {
+  ReceiveMessagePayload,
+  SendTextMessagePayload,
+  UserStatusPayload,
+} from "@/types/socket";
 import { useAuth } from "@/hooks/useAuth";
 import { getConversationById } from "@/app/api";
 import { chatService } from "@/services/chatService";
@@ -32,18 +36,30 @@ export const ChatArea = ({
     const fetchConversation = async () => {
       try {
         const response = await getConversationById(activeConversationId);
-        const responseMessages = await chatService.getMessagesByConversationId(activeConversationId);
+        const responseMessages = await chatService.getMessagesByConversationId(
+          activeConversationId
+        );
 
-        setMessages(responseMessages.data.map((msg) => ({
-          ...msg,
-          sender: msg.senderId === user?._id ? "me" : "them",
-        })));
+        setMessages(
+          responseMessages.data.map((msg) => ({
+            ...msg,
+            sender: msg.senderId === user?._id ? "me" : "them",
+          }))
+        );
 
         if (!response.success) {
           throw new Error(response.message || "Failed to get conversation");
         }
 
         setActiveConversation(response.data);
+
+        // Mark messages as read when entering conversation
+        if (user?._id) {
+          socketService.markMessagesRead({
+            conversationId: activeConversationId,
+            userId: user._id,
+          });
+        }
       } catch (error) {
         console.log("❌ Error fetching conversation:", error);
       }
@@ -54,24 +70,51 @@ export const ChatArea = ({
 
   useEffect(() => {
     if (!user?._id || !activeConversationId) return;
-    socketService.connect(user._id);
 
     const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
       if (payload.message.conversationId === activeConversationId) {
-
         const messagesFormatted: Message = {
           ...payload.message,
           sender: payload.message.senderId === user?._id ? "me" : "them",
         };
 
         setMessages((prev) => [...prev, messagesFormatted]);
+
+        // Mark messages as read immediately when receiving in active conversation
+        if (user?._id && payload.message.senderId !== user._id) {
+          socketService.markMessagesRead({
+            conversationId: activeConversationId,
+            userId: user._id,
+          });
+        }
       }
     };
 
+    const handleUserStatus = (payload: UserStatusPayload) => {
+      setActiveConversation((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          participants: prev.participants.map((participant) => {
+            if (participant._id === payload.userId) {
+              return {
+                ...participant,
+                isOnline: payload.online,
+              };
+            }
+            return participant;
+          }),
+        };
+      });
+    };
+
     socketService.onMessage(handleReceiveMessage);
+    socketService.onUserStatus(handleUserStatus);
 
     return () => {
       socketService.offMessage(handleReceiveMessage);
+      socketService.offUserStatus(handleUserStatus);
     };
   }, [activeConversationId, user?._id]);
 
@@ -108,8 +151,7 @@ export const ChatArea = ({
 
     socketService.sendText(payload);
 
-    console.log('payload [111]: ', payload);
-    
+    console.log("payload [111]: ", payload);
 
     setMessages((prev) => [
       ...prev,

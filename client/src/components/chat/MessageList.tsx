@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 import { MessageItem } from "./MessageItem";
 import { getConversations } from "@/app/api";
 import type { Conversation } from "@/types/message";
+import { socketService } from "@/services/socketService";
+import type {
+  ConversationUpdatedPayload,
+  UserStatusPayload,
+} from "@/types/socket";
 
 type MessageListProps = {
   activeConversationId: string | null;
@@ -25,14 +30,62 @@ export const MessageList = ({
           throw new Error(response.message || "Failed to get conversations");
         }
 
-        setConversations(response.data)
+        setConversations(response.data);
       };
 
       fetchConversation();
     } catch (error) {
       console.log("Error fetching conversations:", error);
     }
-  }, [refreshTrigger])
+  }, [refreshTrigger]);
+
+  // Listen for conversation updates
+  useEffect(() => {
+    const handleConversationUpdated = (payload: ConversationUpdatedPayload) => {
+      setConversations((prev) => {
+        if (!prev) return prev;
+
+        return prev.map((conv) => {
+          if (conv._id === payload.conversationId) {
+            return {
+              ...conv,
+              lastMessage: payload.lastMessage,
+              unreadCount: payload.unreadCount,
+            };
+          }
+          return conv;
+        });
+      });
+    };
+
+    const handleUserStatus = (payload: UserStatusPayload) => {
+      setConversations((prev) => {
+        if (!prev) return prev;
+
+        return prev.map((conv) => ({
+          ...conv,
+          participants: conv.participants.map((participant) => {
+            if (participant._id === payload.userId) {
+              return {
+                ...participant,
+                isOnline: payload.online,
+              };
+            }
+            return participant;
+          }),
+        }));
+      });
+    };
+
+    socketService.onConversationUpdated(handleConversationUpdated);
+    socketService.onUserStatus(handleUserStatus);
+
+    return () => {
+      socketService.offConversationUpdated(handleConversationUpdated);
+      socketService.offUserStatus(handleUserStatus);
+    };
+  }, []);
+
   // Filter pinned (Started) and unpinned (Messages) conversations
   const starredConversations = conversations?.filter((c) => c.isPinned) || [];
   const otherConversations = conversations?.filter((c) => !c.isPinned) || [];

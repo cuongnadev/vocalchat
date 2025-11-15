@@ -42,12 +42,25 @@ export interface ConversationCreatedPayload {
   friendId: string;
 }
 
+export interface ConversationUpdatedPayload {
+  conversationId: string;
+  lastMessage: MessageResponse;
+  unreadCount: number;
+  participantIds: string[];
+}
+
+export interface MarkMessagesReadPayload {
+  conversationId: string;
+  userId: string;
+}
+
 export interface ClientToServerEvents {
   "message:send:text": (payload: SendTextMessagePayload) => void;
   "message:send:file": (payload: SendFileMessagePayload) => void;
   "typing:update": (payload: TypingPayload) => void;
   "user:online": (userId: string) => void;
   "user:offline": (userId: string) => void;
+  "messages:mark:read": (payload: MarkMessagesReadPayload) => void;
 }
 
 export interface ServerToClientEvents {
@@ -55,4 +68,5 @@ export interface ServerToClientEvents {
   "typing:update": (payload: TypingPayload) => void;
   "user:status": (payload: UserStatusPayload) => void;
   "conversation:created": (payload: ConversationCreatedPayload) => void;
+  "conversation:updated": (payload: ConversationUpdatedPayload) => void;
 }

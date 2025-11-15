@@ -8,6 +8,8 @@ import type {
   TypingPayload,
   UserStatusPayload,
   ConversationCreatedPayload,
+  ConversationUpdatedPayload,
+  MarkMessagesReadPayload,
 } from "@/types/socket";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
@@ -18,9 +20,13 @@ type UserStatusCallback = (payload: UserStatusPayload) => void;
 type ConversationCreatedCallback = (
   payload: ConversationCreatedPayload
 ) => void;
+type ConversationUpdatedCallback = (
+  payload: ConversationUpdatedPayload
+) => void;
 
 class SocketService {
-  private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
+  private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
+    null;
 
   connect(userId: string) {
     if (this.socket) return;
@@ -58,6 +64,10 @@ class SocketService {
     this.socket?.emit("typing:update", payload);
   }
 
+  markMessagesRead(payload: MarkMessagesReadPayload) {
+    this.socket?.emit("messages:mark:read", payload);
+  }
+
   onMessage(callback: MessageCallback) {
     this.socket?.on("message:receive", callback);
   }
@@ -74,6 +84,10 @@ class SocketService {
     this.socket?.on("conversation:created", callback);
   }
 
+  onConversationUpdated(callback: ConversationUpdatedCallback) {
+    this.socket?.on("conversation:updated", callback);
+  }
+
   offMessage(callback?: MessageCallback) {
     this.socket?.off("message:receive", callback);
   }
@@ -88,6 +102,10 @@ class SocketService {
 
   offConversationCreated(callback?: ConversationCreatedCallback) {
     this.socket?.off("conversation:created", callback);
+  }
+
+  offConversationUpdated(callback?: ConversationUpdatedCallback) {
+    this.socket?.off("conversation:updated", callback);
   }
 }
 

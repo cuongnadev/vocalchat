@@ -231,7 +231,7 @@ export const UserService = {
     if (!userId) throw new Error('User ID is required');
 
     const conversations = await Conversation.find({ participants: userId })
-      .populate('participants', 'name avatar _id')
+      .populate('participants', 'name avatar _id isOnline')
       .populate('lastMessage')
       .sort({ updatedAt: -1 });
 
@@ -244,7 +244,7 @@ export const UserService = {
       _id: conversationId,
       participants: userId,
     })
-      .populate('participants', '_id name avatar')
+      .populate('participants', '_id name avatar isOnline')
       .populate('lastMessage');
 
     if (!conversation) {

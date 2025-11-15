@@ -363,6 +363,7 @@ export const UserController = {
               _id: p._id,
               name: p.name,
               avatar: p.avatar,
+              isOnline: p.isOnline,
             }))
             .filter((p) => p._id.toString() !== userId),
           lastMessage: conv.lastMessage || null,
@@ -411,6 +412,7 @@ export const UserController = {
               _id: p._id,
               name: p.name,
               avatar: p.avatar,
+              isOnline: p.isOnline,
             }))
             .filter((p) => p._id.toString() !== userId),
           unreadCount: conversation.unreadCount,

@@ -36,6 +36,18 @@ export interface UserStatusPayload {
   online: boolean;
 }
 
+export interface ConversationUpdatedPayload {
+  conversationId: string;
+  lastMessage: IMessage;
+  unreadCount: number;
+  participantIds: string[];
+}
+
+export interface MarkMessagesReadPayload {
+  conversationId: string;
+  userId: string;
+}
+
 export interface ConversationCreatedPayload {
   conversationId: string;
   participantId: string;
@@ -48,6 +60,7 @@ export interface ClientToServerEvents {
   'typing:update': (payload: TypingPayload) => void;
   'user:online': (userId: string) => void;
   'user:offline': (userId: string) => void;
+  'messages:mark:read': (payload: MarkMessagesReadPayload) => void;
 }
 
 export interface ServerToClientEvents {
@@ -55,4 +68,5 @@ export interface ServerToClientEvents {
   'typing:update': (payload: TypingPayload) => void;
   'user:status': (payload: UserStatusPayload) => void;
   'conversation:created': (payload: ConversationCreatedPayload) => void;
+  'conversation:updated': (payload: ConversationUpdatedPayload) => void;
 }
