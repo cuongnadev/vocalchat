@@ -13,7 +13,7 @@ export const MessageItem = ({
   onClick,
 }: MessageItemProps) => {
   const hasUnread = conversation.unreadCount > 0;
-  
+
   return (
     <div
       onClick={() => onClick(conversation._id)}
@@ -23,7 +23,7 @@ export const MessageItem = ({
       <div className="flex gap-3 items-center flex-1 min-w-0">
         <div className="relative">
           <img
-            src={conversation.participants[0].avatar}
+            src={conversation.participants[0].avatar || "https://avatar.iran.liara.run/public"}
             alt={conversation.participants[0].name}
             className="rounded-full w-12 h-12 object-cover border-2 border-white/20"
           />
@@ -50,12 +50,15 @@ export const MessageItem = ({
           </p>
         </div>
       </div>
-      <p
-        className={`text-xs font-medium ${hasUnread ? "text-[#00FFFF]" : "text-gray-500"
-          }`}
-      >
-        {formatTime(conversation.lastMessage?.updatedAt || "")}
-      </p>
+
+      {conversation.lastMessage?.updatedAt && (
+        <p
+          className={`text-xs font-medium ${hasUnread ? "text-[#00FFFF]" : "text-gray-500"
+            }`}
+        >
+          {formatTime(conversation.lastMessage?.updatedAt)}
+        </p>
+      )}
     </div>
   );
 };

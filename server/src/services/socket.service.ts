@@ -33,7 +33,7 @@ async function handleSendMessage(
   io: Server<ClientToServerEvents, ServerToClientEvents>,
   payload: SendMessagePayload,
 ) {
-  const receiverSocketId = onlineUsers.get(payload.receiverId);
+  console.log('payload [36]: ', payload);
 
   const messageData: Partial<IMessage> = {
     conversationId: payload.conversationId,
@@ -51,8 +51,12 @@ async function handleSendMessage(
 
   await Conversation.findByIdAndUpdate(payload.conversationId, { lastMessage: message._id });
 
-  if (receiverSocketId) {
-    io.to(receiverSocketId).emit('message:receive', { message } as ReceiveMessagePayload);
+  for (const receive of payload.receiverId) {
+    const receiverSocketId = onlineUsers.get(receive._id);
+
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('message:receive', { message } as ReceiveMessagePayload);
+    }
   }
 }
 

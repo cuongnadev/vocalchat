@@ -5,6 +5,7 @@ export type User = {
   email?: string;
   phone?: string;
   password?: string;
+  isVerified: boolean;
   isOnline: boolean;
   lastSeen?: string;
 };

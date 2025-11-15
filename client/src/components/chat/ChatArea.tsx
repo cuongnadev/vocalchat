@@ -101,12 +101,15 @@ export const ChatArea = ({
     const payload: SendTextMessagePayload = {
       conversationId: activeConversationId,
       senderId: user?._id as string,
-      receiverId: activeConversation.participantId,
+      receiverId: activeConversation.participants,
       text: messageInput.trim(),
       type: "text",
     };
 
     socketService.sendText(payload);
+
+    console.log('payload [111]: ', payload);
+    
 
     setMessages((prev) => [
       ...prev,

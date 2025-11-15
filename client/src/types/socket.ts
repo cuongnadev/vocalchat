@@ -1,9 +1,10 @@
 import type { MessageResponse, MessageType } from "./message";
+import type { User } from "./user";
 
 export interface SendTextMessagePayload {
   conversationId: string;
   senderId: string;
-  receiverId: string;
+  receiverId: User[];
   text: string;
   type: Extract<MessageType, "text">;
 }
@@ -11,7 +12,7 @@ export interface SendTextMessagePayload {
 export interface SendFileMessagePayload {
   conversationId: string;
   senderId: string;
-  receiverId: string;
+  receiverId: User[];
   fileName: string;
   fileType: string;
   fileSize: number;

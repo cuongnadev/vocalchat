@@ -21,7 +21,6 @@ export type MessageResponse = Omit<Message, "sender">;
 
 export type Conversation = {
   _id: string;
-  participantId: string;
   participants: User[];
   lastMessage: MessageResponse | null;
   unreadCount: number;
