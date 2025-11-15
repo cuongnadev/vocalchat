@@ -17,6 +17,7 @@ type SidebarProps = {
   onSettingsClick: () => void;
   onFriendsClick: () => void;
   onNewChatClick: () => void;
+  refreshTrigger?: number;
 };
 
 export const Sidebar = ({
@@ -27,6 +28,7 @@ export const Sidebar = ({
   onSettingsClick,
   onFriendsClick,
   onNewChatClick,
+  refreshTrigger,
 }: SidebarProps) => {
   return (
     <aside
@@ -54,6 +56,7 @@ export const Sidebar = ({
         <MessageList
           activeConversationId={activeConversationId}
           onSelectConversation={onSelectConversation}
+          refreshTrigger={refreshTrigger}
         />
       </div>
 

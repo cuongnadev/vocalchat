@@ -34,8 +34,6 @@ export const ChatArea = ({
         const response = await getConversationById(activeConversationId);
         const responseMessages = await chatService.getMessagesByConversationId(activeConversationId);
 
-        console.log(responseMessages);
-
         setMessages(responseMessages.data.map((msg) => ({
           ...msg,
           sender: msg.senderId === user?._id ? "me" : "them",
@@ -55,7 +53,7 @@ export const ChatArea = ({
   }, [activeConversationId, user?._id]);
 
   useEffect(() => {
-    if (!user?._id) return;
+    if (!user?._id || !activeConversationId) return;
     socketService.connect(user._id);
 
     const handleReceiveMessage = (payload: ReceiveMessagePayload) => {

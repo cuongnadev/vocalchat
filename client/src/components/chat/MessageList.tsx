@@ -6,11 +6,13 @@ import type { Conversation } from "@/types/message";
 type MessageListProps = {
   activeConversationId: string | null;
   onSelectConversation: (id: string) => void;
+  refreshTrigger?: number;
 };
 
 export const MessageList = ({
   activeConversationId,
   onSelectConversation,
+  refreshTrigger,
 }: MessageListProps) => {
   const [conversations, setConversations] = useState<Conversation[]>();
 
@@ -24,13 +26,13 @@ export const MessageList = ({
         }
 
         setConversations(response.data)
-      }
+      };
 
       fetchConversation();
     } catch (error) {
-      console.log("❌ Error fetching conversations:", error);
+      console.log("Error fetching conversations:", error);
     }
-  }, [])
+  }, [refreshTrigger])
   // Filter pinned (Started) and unpinned (Messages) conversations
   const starredConversations = conversations?.filter((c) => c.isPinned) || [];
   const otherConversations = conversations?.filter((c) => !c.isPinned) || [];

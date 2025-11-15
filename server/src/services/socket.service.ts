@@ -10,6 +10,7 @@ import type {
 } from '@/types/socket';
 import type { IMessage, MessageType } from '@/types/message';
 import { Message } from '@/models/message.model';
+import { Conversation } from '@/models/conversation.model';
 
 const onlineUsers = new Map<string, string>();
 
@@ -38,7 +39,6 @@ async function handleSendMessage(
     conversationId: payload.conversationId,
     senderId: payload.senderId,
     text: 'text' in payload ? payload.text : '',
-    sender: 'them',
     isRead: false,
     status: 'sent',
     type: payload.type as MessageType,
@@ -48,6 +48,8 @@ async function handleSendMessage(
 
   const message = new Message(messageData);
   await message.save();
+
+  await Conversation.findByIdAndUpdate(payload.conversationId, { lastMessage: message._id });
 
   if (receiverSocketId) {
     io.to(receiverSocketId).emit('message:receive', { message } as ReceiveMessagePayload);

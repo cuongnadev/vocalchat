@@ -10,7 +10,6 @@ import type { User } from "@/types/user";
 import { useToast } from "@/hooks/useToast";
 import { Toast } from "@/components/ui/toast/Toast";
 import { socketService } from "@/services/socketService";
-import type { ConversationCreatedPayload } from "@/types/socket";
 
 type ViewType = "chat" | "friends" | "settings";
 
@@ -22,18 +21,27 @@ const Chat = () => {
   >(null);
   const [currentView, setCurrentView] = useState<ViewType>("chat");
   const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!user?._id) return;
 
-    const handleConversationCreated = (payload: ConversationCreatedPayload) => {
-      console.log("New conversation created:", payload);
+    socketService.connect(user._id);
+
+    return () => {
+      socketService.disconnect();
+    };
+  }, [user?._id]);
+
+  useEffect(() => {
+    if (!user?._id) return;
+
+    const handleConversationCreated = () => {
       showToast(
         "success",
         "New conversation created! You can now start chatting."
       );
-      // TODO: Refresh conversation list from API instead of using mock data
-      // Can call API to get new conversation list
+      setRefreshTrigger((prev) => prev + 1);
     };
 
     socketService.onConversationCreated(handleConversationCreated);
@@ -42,14 +50,6 @@ const Chat = () => {
       socketService.offConversationCreated(handleConversationCreated);
     };
   }, [user?._id, showToast]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-linear-to-br from-[#0a001f] via-[#10002b] to-[#1b0038]">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
 
   if (!user) {
     return null;
@@ -150,6 +150,7 @@ const Chat = () => {
         onSettingsClick={handleSettingsClick}
         onFriendsClick={handleFriendsClick}
         onNewChatClick={handleNewChatClick}
+        refreshTrigger={refreshTrigger}
       />
 
       {currentView === "chat" && (
