@@ -1,4 +1,6 @@
 import { Server, Socket } from 'socket.io';
+import * as fs from 'fs';
+import * as path from 'path';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -14,6 +16,7 @@ import type { IMessage, MessageType } from '@/types/message';
 import { Message } from '@/models/message.model';
 import { Conversation } from '@/models/conversation.model';
 import { User } from '@/models/user.model';
+import { env } from '@/config/env.config';
 
 const onlineUsers = new Map<string, string>();
 
@@ -32,12 +35,39 @@ export function getIO() {
 
 type SendMessagePayload = SendTextMessagePayload | SendFileMessagePayload;
 
+async function saveFileToLocal(
+  buffer: ArrayBuffer,
+  fileName: string,
+  fileType: string,
+  type: MessageType,
+): Promise<{ filePath: string; fileUrl: string }> {
+  const subDir =
+    type === 'image' ? 'images' : type === 'audio' ? 'audio' : type === 'video' ? 'video' : 'files';
+
+  const timestamp = Date.now();
+  const ext = path.extname(fileName);
+  const baseName = path.basename(fileName, ext);
+  const uniqueFileName = `${baseName}_${timestamp}${ext}`;
+
+  const uploadDir = path.join(process.cwd(), 'uploads', subDir);
+  const filePath = path.join(uploadDir, uniqueFileName);
+
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const fileBuffer = Buffer.from(buffer);
+  await fs.promises.writeFile(filePath, fileBuffer);
+
+  const fileUrl = `${env.SERVER_URL}/uploads/${subDir}/${uniqueFileName}`;
+
+  return { filePath, fileUrl };
+}
+
 async function handleSendMessage(
   io: Server<ClientToServerEvents, ServerToClientEvents>,
   payload: SendMessagePayload,
 ) {
-  console.log('payload [36]: ', payload);
-
   const messageData: Partial<IMessage> = {
     conversationId: payload.conversationId,
     senderId: payload.senderId,
@@ -47,7 +77,29 @@ async function handleSendMessage(
     type: payload.type as MessageType,
   };
 
-  console.log('Message data: ', messageData);
+  if ('buffer' in payload && payload.buffer) {
+    try {
+      const { filePath, fileUrl } = await saveFileToLocal(
+        payload.buffer,
+        payload.fileName,
+        payload.fileType,
+        payload.type,
+      );
+
+      messageData.fileMetadata = {
+        fileName: payload.fileName,
+        fileType: payload.fileType,
+        fileSize: payload.fileSize,
+        filePath,
+        fileUrl,
+      };
+
+      messageData.text = fileUrl;
+    } catch (error) {
+      console.error('❌ Error saving file:', error);
+      messageData.status = 'failed';
+    }
+  }
 
   const message = new Message(messageData);
   await message.save();
@@ -58,7 +110,6 @@ async function handleSendMessage(
     conversation.lastMessage = message._id;
 
     if (conversation.deletedBy && conversation.deletedBy.length > 0) {
-      console.log('Clearing deletedBy array:', conversation.deletedBy);
       conversation.deletedBy = [];
     }
 
@@ -71,7 +122,6 @@ async function handleSendMessage(
   );
 
   if (!populatedConversation) {
-    console.error('Conversation not found');
     return;
   }
 
@@ -82,6 +132,11 @@ async function handleSendMessage(
     if (receiverSocketId) {
       io.to(receiverSocketId).emit('message:receive', { message } as ReceiveMessagePayload);
     }
+  }
+
+  const senderSocketId = onlineUsers.get(payload.senderId);
+  if (senderSocketId) {
+    io.to(senderSocketId).emit('message:receive', { message } as ReceiveMessagePayload);
   }
 
   // Emit conversation updated event to all participants
