@@ -4,6 +4,14 @@ export type MessageSender = "me" | "them";
 export type MessageStatus = "sending" | "sent" | "read" | "failed";
 export type MessageType = "text" | "image" | "file" | "audio" | "video";
 
+export interface FileMetadata {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  filePath: string;
+  fileUrl: string;
+}
+
 export type Message = {
   _id: string;
   conversationId: string;
@@ -13,6 +21,7 @@ export type Message = {
   isRead: boolean;
   status: MessageStatus;
   type: MessageType;
+  fileMetadata?: FileMetadata;
   createdAt: string;
   updatedAt: string;
 };

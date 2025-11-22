@@ -39,6 +39,7 @@ class SocketService {
       transports: ["websocket"],
       withCredentials: true,
       auth: { userId },
+      timeout: 60000,
     });
 
     this.socket.on("connect", () => {
@@ -47,6 +48,10 @@ class SocketService {
 
     this.socket.on("disconnect", () => {
       console.log("❌ Socket disconnected");
+    });
+
+    this.socket.on("connect_error", (error) => {
+      console.error("🔥 Socket connection error:", error);
     });
   }
 
@@ -57,11 +62,18 @@ class SocketService {
 
   // Send messages
   sendText(payload: SendTextMessagePayload) {
-    this.socket?.emit("message:send:text", payload);
+    if (!this.socket?.connected) {
+      return;
+    }
+    this.socket.emit("message:send:text", payload);
   }
 
   sendFile(payload: SendFileMessagePayload) {
-    this.socket?.emit("message:send:file", payload);
+    if (!this.socket?.connected) {
+      return;
+    }
+
+    this.socket.emit("message:send:file", payload);
   }
 
   updateTyping(payload: TypingPayload) {

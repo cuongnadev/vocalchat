@@ -10,12 +10,15 @@ import type { Conversation, Message } from "@/types/message";
 import type {
   ReceiveMessagePayload,
   SendTextMessagePayload,
+  SendFileMessagePayload,
   UserStatusPayload,
 } from "@/types/socket";
 import type { User } from "@/types/user";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
 import { getConversationById } from "@/app/api";
 import { chatService } from "@/services/chatService";
+import { Toast } from "../ui/toast/Toast";
 
 type ChatAreaProps = {
   className?: string;
@@ -43,11 +46,15 @@ export const ChatArea = ({
   onDissolveGroup,
 }: ChatAreaProps) => {
   const { user } = useAuth();
+  const { showToast, toasts, removeToast } = useToast();
   const [messageInput, setMessageInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation>();
   const [showDetails, setShowDetails] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -97,7 +104,17 @@ export const ChatArea = ({
           sender: payload.message.senderId === user?._id ? "me" : "them",
         };
 
-        setMessages((prev) => [...prev, messagesFormatted]);
+        setMessages((prev) => {
+          const filtered = prev.filter(
+            (msg) =>
+              !(
+                msg._id.startsWith("temp-") &&
+                msg.conversationId === messagesFormatted.conversationId &&
+                msg.senderId === messagesFormatted.senderId
+              )
+          );
+          return [...filtered, messagesFormatted];
+        });
 
         // Mark messages as read immediately when receiving in active conversation
         if (user?._id && payload.message.senderId !== user._id) {
@@ -186,8 +203,6 @@ export const ChatArea = ({
 
     socketService.sendText(payload);
 
-    console.log("payload [111]: ", payload);
-
     setMessages((prev) => [
       ...prev,
       {
@@ -215,17 +230,116 @@ export const ChatArea = ({
   };
 
   const handleFileSelect = (type: "image" | "file") => {
-    // TODO: Integrate file upload
-    console.log("Opening file picker for:", type);
-
     const input = document.createElement("input");
     input.type = "file";
     input.accept = type === "image" ? "image/*" : "*/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log("File selected:", file);
-        // TODO: Upload file to backend
+
+      if (!file || !activeConversation || !user) {
+        return;
+      }
+
+      try {
+        const dangerousExtensions = [
+          ".exe",
+          ".bat",
+          ".cmd",
+          ".sh",
+          ".com",
+          ".scr",
+        ];
+        const fileExtension = file.name
+          .toLowerCase()
+          .substring(file.name.lastIndexOf("."));
+        if (dangerousExtensions.includes(fileExtension)) {
+          showToast("error", "This file type is not allowed!");
+          return;
+        }
+
+        // Validate file size based on type
+        const maxSize = type === "image" ? MAX_IMAGE_SIZE : MAX_FILE_SIZE;
+        if (file.size > maxSize) {
+          const sizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          showToast(
+            "error",
+            `File is too large! Maximum size for ${
+              type === "image" ? "image" : "file"
+            } is ${sizeMB}MB. Your file: ${fileSizeMB}MB`
+          );
+          return;
+        }
+
+        // Read file as ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer();
+
+        // Determine message type based on file type
+        let messageType: "image" | "file" | "audio" | "video" = "file";
+
+        // If user clicked image button, force it to be image type
+        if (type === "image") {
+          messageType = "image";
+        } else {
+          // Otherwise, auto-detect from MIME type
+          if (file.type.startsWith("image/")) messageType = "image";
+          else if (file.type.startsWith("audio/")) messageType = "audio";
+          else if (file.type.startsWith("video/")) messageType = "video";
+        }
+
+        // Get receiver info - use full User objects from participants
+        const receiverId = activeConversation.participants;
+
+        // Create temporary message for UI
+        const tempMessage: Message = {
+          _id: `temp-${Date.now()}`,
+          conversationId: activeConversation._id,
+          senderId: user._id,
+          text: file.name,
+          sender: "me",
+          isRead: false,
+          status: "sending",
+          type: messageType,
+          fileMetadata: {
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            filePath: "",
+            fileUrl: URL.createObjectURL(file),
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        // Add to UI immediately
+        setMessages((prev) => [...prev, tempMessage]);
+
+        // Send via socket
+        const payload: SendFileMessagePayload = {
+          conversationId: activeConversation._id,
+          senderId: user._id,
+          receiverId,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          buffer: arrayBuffer,
+          type: messageType,
+        };
+
+        socketService.sendFile(payload);
+
+        // Show success toast
+        showToast(
+          "success",
+          `Sending ${messageType === "image" ? "image" : "file"}: ${file.name}`
+        );
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        showToast("error", "Error uploading file. Please try again!");
+        // Remove failed temp message
+        setMessages((prev) =>
+          prev.filter((msg) => !msg._id.startsWith("temp-"))
+        );
       }
     };
     input.click();
@@ -356,6 +470,17 @@ export const ChatArea = ({
           }}
         />
       )}
+
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            type={toast.type}
+            message={toast.message}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
