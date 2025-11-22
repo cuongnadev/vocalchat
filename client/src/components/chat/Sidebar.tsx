@@ -40,6 +40,9 @@ export const Sidebar = ({
   onStartConversation,
 }: SidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const isElectron = window.env?.isElectron ?? false;
+
+  const logoPath = isElectron ? "../web/logo.ico" : "/logo.ico";
 
   return (
     <aside
@@ -48,7 +51,7 @@ export const Sidebar = ({
       <div className="shrink-0 px-5 pt-4 pb-3 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="flex items-center gap-2 text-xl font-bold text-white">
-            <img src="/logo.ico" alt="logo" className="w-8 h-8" />
+            <img src={logoPath} alt="logo" className="w-8 h-8" />
             VocalChat
           </h2>
           <Button

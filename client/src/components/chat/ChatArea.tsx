@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/useToast";
 import { getConversationById } from "@/app/api";
 import { chatService } from "@/services/chatService";
 import { Toast } from "../ui/toast/Toast";
+import { VoiceModal } from "../common/modal/VoiceModal";
 
 type ChatAreaProps = {
   className?: string;
@@ -51,10 +52,15 @@ export const ChatArea = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation>();
   const [showDetails, setShowDetails] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const MAX_FILE_SIZE = 50 * 1024 * 1024;
   const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -159,7 +165,6 @@ export const ChatArea = ({
       }
     };
 
-    socketService.onMessage(handleReceiveMessage);
     socketService.onUserStatus(handleUserStatus);
     socketService.onConversationUpdated(handleConversationUpdated);
 
@@ -168,7 +173,7 @@ export const ChatArea = ({
       socketService.offUserStatus(handleUserStatus);
       socketService.offConversationUpdated(handleConversationUpdated);
     };
-  }, [activeConversationId, user?._id]);
+  }, [activeConversationId, user?._id, messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -264,8 +269,7 @@ export const ChatArea = ({
           const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
           showToast(
             "error",
-            `File is too large! Maximum size for ${
-              type === "image" ? "image" : "file"
+            `File is too large! Maximum size for ${type === "image" ? "image" : "file"
             } is ${sizeMB}MB. Your file: ${fileSizeMB}MB`
           );
           return;
@@ -345,9 +349,11 @@ export const ChatArea = ({
     input.click();
   };
 
-  const handleVoiceRecord = () => {
-    // TODO: Integrate voice recording
-    console.log("Start voice recording");
+  const handleSendRecord = (mode: string, audio: Blob) => {
+    const url = URL.createObjectURL(audio);
+    const audioElement = new Audio(url);
+    audioElement.play();
+    alert(`Send mode: ${mode}. Audio blob size: ${audio.size} bytes`);
   };
 
   return (
@@ -373,6 +379,7 @@ export const ChatArea = ({
               <p className="text-gray-400">No messages yet</p>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
@@ -426,7 +433,7 @@ export const ChatArea = ({
                 variant="ghost"
                 size="sm"
                 radius="full"
-                onClick={handleVoiceRecord}
+                onClick={() => setShowVoiceModal(true)}
                 className="text-[#8B5CF6] py-3"
               />
             )}
@@ -481,6 +488,13 @@ export const ChatArea = ({
           />
         ))}
       </div>
+
+      {showVoiceModal && (
+        <VoiceModal
+          onClose={() => setShowVoiceModal(false)}
+          onSend={handleSendRecord}
+        />
+      )}
     </div>
   );
 };

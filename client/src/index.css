@@ -14,3 +14,37 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+.wave-container {
+  display: flex;
+  align-items: center;
+  animation: dotSlide 10s linear infinite;
+  animation-delay: 3s;
+  will-change: transform;
+}
+
+.wave-container > div {
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+}
+
+@keyframes dotGrow {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+    visibility: visible;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+    visibility: visible;
+  }
+}
+
+@keyframes dotSlide {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-320px);
+  }
+}
