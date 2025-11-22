@@ -9,6 +9,7 @@ import type {
   UserStatusPayload,
   ConversationCreatedPayload,
   ConversationUpdatedPayload,
+  ConversationDeletedPayload,
   MarkMessagesReadPayload,
 } from "@/types/socket";
 
@@ -22,6 +23,9 @@ type ConversationCreatedCallback = (
 ) => void;
 type ConversationUpdatedCallback = (
   payload: ConversationUpdatedPayload
+) => void;
+type ConversationDeletedCallback = (
+  payload: ConversationDeletedPayload
 ) => void;
 
 class SocketService {
@@ -88,6 +92,10 @@ class SocketService {
     this.socket?.on("conversation:updated", callback);
   }
 
+  onConversationDeleted(callback: ConversationDeletedCallback) {
+    this.socket?.on("conversation:deleted", callback);
+  }
+
   offMessage(callback?: MessageCallback) {
     this.socket?.off("message:receive", callback);
   }
@@ -106,6 +114,10 @@ class SocketService {
 
   offConversationUpdated(callback?: ConversationUpdatedCallback) {
     this.socket?.off("conversation:updated", callback);
+  }
+
+  offConversationDeleted(callback?: ConversationDeletedCallback) {
+    this.socket?.off("conversation:deleted", callback);
   }
 }
 

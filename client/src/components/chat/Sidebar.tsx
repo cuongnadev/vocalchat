@@ -3,6 +3,7 @@ import { MessageList } from "./MessageList";
 import { UserCard } from "../common/card/UserCard";
 import { Plus } from "lucide-react";
 import { Button } from "../ui/button/Button";
+import { useState } from "react";
 
 type SidebarProps = {
   className?: string;
@@ -18,6 +19,10 @@ type SidebarProps = {
   onFriendsClick: () => void;
   onNewChatClick: () => void;
   refreshTrigger?: number;
+  onMarkAsRead?: (conversationId: string) => void;
+  onMarkAsUnread?: (conversationId: string) => void;
+  onDeleteConversation?: (conversationId: string) => void;
+  onStartConversation?: (friendId: string) => void;
 };
 
 export const Sidebar = ({
@@ -29,7 +34,13 @@ export const Sidebar = ({
   onFriendsClick,
   onNewChatClick,
   refreshTrigger,
+  onMarkAsRead,
+  onMarkAsUnread,
+  onDeleteConversation,
+  onStartConversation,
 }: SidebarProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <aside
       className={`${className} bg-white/5 backdrop-blur-xl border-r border-white/10 h-screen flex flex-col`}
@@ -49,7 +60,7 @@ export const Sidebar = ({
             className="shadow-lg hover:shadow-xl hover:scale-105 py-3"
           />
         </div>
-        <InputSearch />
+        <InputSearch value={searchQuery} onChange={setSearchQuery} />
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-hide px-5">
@@ -57,6 +68,11 @@ export const Sidebar = ({
           activeConversationId={activeConversationId}
           onSelectConversation={onSelectConversation}
           refreshTrigger={refreshTrigger}
+          searchQuery={searchQuery}
+          onMarkAsRead={onMarkAsRead}
+          onMarkAsUnread={onMarkAsUnread}
+          onDeleteConversation={onDeleteConversation}
+          onStartConversation={onStartConversation}
         />
       </div>
 

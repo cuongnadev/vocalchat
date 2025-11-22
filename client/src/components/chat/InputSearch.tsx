@@ -3,9 +3,15 @@ import { Input } from "../ui/input/input";
 
 type InputSearchProps = {
   className?: string;
+  value: string;
+  onChange: (value: string) => void;
 };
 
-export const InputSearch = ({ className }: InputSearchProps) => {
+export const InputSearch = ({
+  className,
+  value,
+  onChange,
+}: InputSearchProps) => {
   return (
     <div className={className}>
       <Input
@@ -14,6 +20,8 @@ export const InputSearch = ({ className }: InputSearchProps) => {
         iconPosition="left"
         variant="third"
         radius="full"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
       />
     </div>
   );

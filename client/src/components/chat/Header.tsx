@@ -2,34 +2,49 @@ import type { Conversation } from "@/types/message";
 import { MoreVertical, Phone, Video } from "lucide-react";
 import { Button } from "../ui/button/Button";
 
-
 type HeaderProps = {
   activeConversation: Conversation | undefined;
+  onToggleDetails?: () => void;
 };
 
-export const Header = ({ activeConversation }: HeaderProps) => {
+export const Header = ({
+  activeConversation,
+  onToggleDetails,
+}: HeaderProps) => {
+  if (!activeConversation) return null;
+
+  const displayName = activeConversation.isGroup
+    ? activeConversation.groupName
+    : activeConversation.participants[0]?.name;
+
+  const displayAvatar = activeConversation.isGroup
+    ? activeConversation.groupAvatar || "https://avatar.iran.liara.run/public"
+    : activeConversation.participants[0]?.avatar ||
+      "https://avatar.iran.liara.run/public";
+
+  const displayStatus = activeConversation.isGroup
+    ? `${activeConversation.participants.length + 1} members`
+    : activeConversation.participants[0]?.isOnline
+    ? "Active now"
+    : "Offline";
+
+  const statusColor = activeConversation.isGroup
+    ? "text-gray-400"
+    : activeConversation.participants[0]?.isOnline
+    ? "text-[#00FFFF]"
+    : "text-gray-400";
+
   return (
     <div className="border-b border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <img
-          src={activeConversation?.participants[0].avatar || "https://avatar.iran.liara.run/public"}
-          alt={activeConversation?.participants[0].name}
+          src={displayAvatar}
+          alt={displayName}
           className="rounded-full w-10 h-10 object-cover border-2 border-white/20"
         />
         <div>
-          <h3 className="font-semibold text-white">
-            {activeConversation?.participants[0].name}
-          </h3>
-          <p
-            className={`text-xs ${activeConversation?.participants[0].isOnline
-                ? "text-[#00FFFF]"
-                : "text-gray-400"
-              }`}
-          >
-            {activeConversation?.participants[0].isOnline
-              ? "Active now"
-              : "Offline"}
-          </p>
+          <h3 className="font-semibold text-white">{displayName}</h3>
+          <p className={`text-xs ${statusColor}`}>{displayStatus}</p>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -53,6 +68,7 @@ export const Header = ({ activeConversation }: HeaderProps) => {
           size="sm"
           radius="full"
           className="text-gray-300 py-3"
+          onClick={onToggleDetails}
         />
       </div>
     </div>

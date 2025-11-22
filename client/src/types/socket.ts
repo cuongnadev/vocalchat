@@ -54,6 +54,11 @@ export interface MarkMessagesReadPayload {
   userId: string;
 }
 
+export interface ConversationDeletedPayload {
+  conversationId: string;
+  participantIds: string[];
+}
+
 export interface ClientToServerEvents {
   "message:send:text": (payload: SendTextMessagePayload) => void;
   "message:send:file": (payload: SendFileMessagePayload) => void;
@@ -69,4 +74,5 @@ export interface ServerToClientEvents {
   "user:status": (payload: UserStatusPayload) => void;
   "conversation:created": (payload: ConversationCreatedPayload) => void;
   "conversation:updated": (payload: ConversationUpdatedPayload) => void;
+  "conversation:deleted": (payload: ConversationDeletedPayload) => void;
 }

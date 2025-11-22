@@ -2,7 +2,7 @@ import type { User } from "./user";
 
 export type MessageSender = "me" | "them";
 export type MessageStatus = "sending" | "sent" | "read" | "failed";
-export type MessageType = 'text' | 'image' | 'file' | 'audio' | 'video';
+export type MessageType = "text" | "image" | "file" | "audio" | "video";
 
 export type Message = {
   _id: string;
@@ -27,6 +27,10 @@ export type Conversation = {
   isPinned: boolean;
   isMuted: boolean;
   isArchived: boolean;
+  isGroup: boolean;
+  groupName?: string;
+  groupAvatar?: string;
+  admin?: string;
   createdAt: string;
   updatedAt: string;
 };

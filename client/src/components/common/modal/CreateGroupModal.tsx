@@ -77,8 +77,15 @@ export const CreateGroupModal = ({
 
           {/* Search Friends */}
           <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-300">
+                Add Members (min 2 members)
+              </label>
+              <span className="text-xs text-gray-400">
+                {selectedUserIds.length} selected
+              </span>
+            </div>
             <Input
-              label="Add Members"
               placeholder="Search friends..."
               icon={<Search size={18} />}
               iconPosition="left"
@@ -93,11 +100,11 @@ export const CreateGroupModal = ({
           <div className="bg-white/5 rounded-xl border border-white/10 max-h-[200px] overflow-y-auto scrollbar-hide">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => {
-                const isSelected = selectedUserIds.includes(user.id);
+                const isSelected = selectedUserIds.includes(user._id);
                 return (
                   <div
-                    key={user.id}
-                    onClick={() => toggleUserSelection(user.id)}
+                    key={user._id}
+                    onClick={() => toggleUserSelection(user._id)}
                     className={`flex items-center justify-between p-3 hover:bg-white/10 cursor-pointer transition-colors ${
                       isSelected ? "bg-white/10" : ""
                     }`}
@@ -133,6 +140,13 @@ export const CreateGroupModal = ({
               </div>
             )}
           </div>
+
+          {selectedUserIds.length > 0 && selectedUserIds.length < 2 && (
+            <p className="text-xs text-yellow-400">
+              Please select at least 2 members to create a group (total 3
+              including you)
+            </p>
+          )}
         </div>
 
         {/* Footer */}
@@ -150,7 +164,7 @@ export const CreateGroupModal = ({
             size="md"
             radius="lg"
             onClick={handleCreate}
-            disabled={!groupName.trim() || selectedUserIds.length === 0}
+            disabled={!groupName.trim() || selectedUserIds.length < 2}
           />
         </div>
       </div>

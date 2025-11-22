@@ -97,3 +97,99 @@ export const getConversationById = (id: string) => {
   });
 };
 
+export const createGroupConversation = (data: {
+  groupName: string;
+  participantIds: string[];
+  groupAvatar?: string;
+}) => {
+  return requestApi<Conversation>("/users/conversations/group", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const searchConversations = (query: string) => {
+  return requestApi<Conversation[]>(
+    `/users/conversations/search?query=${encodeURIComponent(query)}`,
+    {
+      method: "GET",
+    }
+  );
+};
+
+export const markConversationAsRead = (conversationId: string) => {
+  return requestApi<{ message: string }>(
+    `/users/conversations/${conversationId}/read`,
+    {
+      method: "PATCH",
+    }
+  );
+};
+
+export const markConversationAsUnread = (conversationId: string) => {
+  return requestApi<{ message: string }>(
+    `/users/conversations/${conversationId}/unread`,
+    {
+      method: "PATCH",
+    }
+  );
+};
+
+export const deleteConversation = (conversationId: string) => {
+  return requestApi<{ message: string }>(
+    `/users/conversations/${conversationId}`,
+    {
+      method: "DELETE",
+    }
+  );
+};
+
+export const dissolveGroup = (conversationId: string) => {
+  return requestApi<{ message: string }>(
+    `/users/conversations/${conversationId}/dissolve`,
+    {
+      method: "DELETE",
+    }
+  );
+};
+
+export const updateGroupInfo = (
+  conversationId: string,
+  data: { groupName?: string; groupAvatar?: string }
+) => {
+  return requestApi<Conversation>(
+    `/users/conversations/${conversationId}/group`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }
+  );
+};
+
+export const addGroupMembers = (
+  conversationId: string,
+  memberIds: string[]
+) => {
+  return requestApi<Conversation>(
+    `/users/conversations/${conversationId}/members`,
+    {
+      method: "POST",
+      body: JSON.stringify({ memberIds }),
+    }
+  );
+};
+
+export const removeGroupMember = (conversationId: string, memberId: string) => {
+  return requestApi<Conversation>(
+    `/users/conversations/${conversationId}/members/${memberId}`,
+    {
+      method: "DELETE",
+    }
+  );
+};
+
+export const getOrCreateConversation = (friendId: string) => {
+  return requestApi<Conversation>(`/users/conversations/direct/${friendId}`, {
+    method: "GET",
+  });
+};
