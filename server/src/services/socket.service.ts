@@ -52,13 +52,25 @@ async function handleSendMessage(
   const message = new Message(messageData);
   await message.save();
 
-  // Update conversation with lastMessage
-  await Conversation.findByIdAndUpdate(payload.conversationId, { lastMessage: message._id });
+  // Update conversation with lastMessage and restore for deleted users
+  const conversation: any = await Conversation.findById(payload.conversationId);
+  if (conversation) {
+    conversation.lastMessage = message._id;
+
+    if (conversation.deletedBy && conversation.deletedBy.length > 0) {
+      console.log('Clearing deletedBy array:', conversation.deletedBy);
+      conversation.deletedBy = [];
+    }
+
+    await conversation.save();
+  }
 
   // Get conversation to count unread messages
-  const conversation = await Conversation.findById(payload.conversationId).populate('participants');
+  const populatedConversation = await Conversation.findById(payload.conversationId).populate(
+    'participants',
+  );
 
-  if (!conversation) {
+  if (!populatedConversation) {
     console.error('Conversation not found');
     return;
   }
@@ -73,7 +85,7 @@ async function handleSendMessage(
   }
 
   // Emit conversation updated event to all participants
-  const participantIds = conversation.participants.map((p: any) => p._id.toString());
+  const participantIds = populatedConversation.participants.map((p: any) => p._id.toString());
 
   for (const participantId of participantIds) {
     const socketId = onlineUsers.get(participantId);

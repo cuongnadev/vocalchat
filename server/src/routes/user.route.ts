@@ -5,6 +5,24 @@ import { Router } from 'express';
 const router = Router();
 
 router.get('/conversations', authMiddleware, UserController.getConversations);
+router.get('/conversations/search', authMiddleware, UserController.searchConversations);
+router.get(
+  '/conversations/direct/:friendId',
+  authMiddleware,
+  UserController.getOrCreateDirectConversation,
+);
+router.post('/conversations/group', authMiddleware, UserController.createGroupConversation);
+router.patch('/conversations/:id/read', authMiddleware, UserController.markConversationAsRead);
+router.patch('/conversations/:id/unread', authMiddleware, UserController.markConversationAsUnread);
+router.delete('/conversations/:id', authMiddleware, UserController.deleteConversation);
+router.delete('/conversations/:id/dissolve', authMiddleware, UserController.dissolveGroup);
+router.patch('/conversations/:id/group', authMiddleware, UserController.updateGroupInfo);
+router.post('/conversations/:id/members', authMiddleware, UserController.addGroupMembers);
+router.delete(
+  '/conversations/:id/members/:memberId',
+  authMiddleware,
+  UserController.removeGroupMember,
+);
 router.post('/search', authMiddleware, UserController.searchUsers);
 router.get('/me', authMiddleware, UserController.getCurrentUser);
 router.patch('/me', authMiddleware, UserController.updateProfile);

@@ -19,7 +19,7 @@ export const MessageController = {
     }
 
     try {
-      const messages = await MessageService.getMessageByConversationId(id);
+      const messages = await MessageService.getMessageByConversationId(id, userId);
 
       return res.status(200).json({
         success: true,
