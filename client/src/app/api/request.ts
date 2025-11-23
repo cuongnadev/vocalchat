@@ -8,9 +8,12 @@ export async function requestApi<T>(
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   const token = getToken();
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
+
+  const headers: HeadersInit = {};
+
+  if (!(options?.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -22,9 +25,21 @@ export async function requestApi<T>(
   });
 
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "API request failed");
+    const text = await res.text();
+    let errorMsg = text;
+    try {
+      const json = JSON.parse(text);
+      errorMsg = json.message || text;
+    } catch {
+      // ignore invalid JSON
+    }
+    throw new Error(errorMsg || "API request failed");
   }
 
-  return res.json();
+  const contentType = res.headers.get("Content-Type") || "";
+  if (contentType.includes("application/json")) {
+    return res.json();
+  }
+
+  return res.text() as unknown as ApiResponse<T>;
 }

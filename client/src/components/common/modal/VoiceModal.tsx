@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Mic, Trash2, SendHorizonal, X } from "lucide-react";
 import { Button } from "@/components/ui/button/Button";
+import type { MessageType } from "@/types/message";
 
 type VoiceModalProps = {
     onClose: () => void;
-    onSend: (mode: "audio" | "text", audio: Blob) => void;
+    onSend: (mode: Extract<MessageType, "text" | "audio">, audio: Blob) => void;
 };
 
 export const VoiceModal = ({ onClose, onSend }: VoiceModalProps) => {

@@ -6,7 +6,7 @@ import { ConversationDetails } from "./ConversationDetails";
 import { Button } from "../ui/button/Button";
 import { Input } from "../ui/input/input";
 import { socketService } from "@/services/socketService";
-import type { Conversation, Message } from "@/types/message";
+import type { Conversation, Message, MessageType } from "@/types/message";
 import type {
   ReceiveMessagePayload,
   SendTextMessagePayload,
@@ -349,11 +349,79 @@ export const ChatArea = ({
     input.click();
   };
 
-  const handleSendRecord = (mode: string, audio: Blob) => {
-    const url = URL.createObjectURL(audio);
-    const audioElement = new Audio(url);
-    audioElement.play();
-    alert(`Send mode: ${mode}. Audio blob size: ${audio.size} bytes`);
+  const handleSendRecord = async (mode: Extract<MessageType, "text" | "audio">, audio: Blob) => {
+    if (!activeConversationId) return;
+
+    if (mode === "audio") {
+      const file = new File([audio], `recording-${Date.now()}.webm`, { type: "audio/webm" });
+
+      const tempMessage: Message = {
+        _id: `temp-${Date.now()}`,
+        conversationId: activeConversation._id,
+        senderId: user?._id as string,
+        text: file.name,
+        sender: "me",
+        isRead: false,
+        status: "sending",
+        type: "audio",
+        fileMetadata: {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          filePath: "",
+          fileUrl: URL.createObjectURL(file),
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Add to UI immediately
+      setMessages((prev) => [...prev, tempMessage]);
+
+      // Send via socket
+      const payload: SendFileMessagePayload = {
+        conversationId: activeConversation._id,
+        senderId: user?._id as string,
+        receiverId: activeConversation.participants,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        buffer: await audio.arrayBuffer(),
+        type: "audio",
+      };
+
+      socketService.sendFile(payload);
+    }
+
+    if (mode === "text") {
+      const response = await chatService.convertVoiceToText(audio);
+
+      const payload: SendTextMessagePayload = {
+        conversationId: activeConversationId,
+        senderId: user?._id as string,
+        receiverId: activeConversation.participants,
+        text: response.data,
+        type: "text",
+      };
+
+      socketService.sendText(payload);
+
+      setMessages((prev) => [
+      ...prev,
+      {
+        _id: Date.now().toString(),
+        conversationId: payload.conversationId,
+        senderId: payload.senderId,
+        sender: "me",
+        text: payload.text,
+        isRead: false,
+        status: "sending",
+        type: payload.type,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+    }
   };
 
   return (

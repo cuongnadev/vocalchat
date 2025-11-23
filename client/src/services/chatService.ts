@@ -1,4 +1,4 @@
-import { getMessagesByConversationId } from "@/app/api/message";
+import { convertVoiceToText, getMessagesByConversationId } from "@/app/api/message";
 
 class ChatService {
     async getMessagesByConversationId(conversationId: string) {
@@ -11,6 +11,10 @@ class ChatService {
         }
 
         return messages;
+    }
+
+    async convertVoiceToText(audioBlob: Blob) {
+        return await convertVoiceToText(audioBlob);
     }
 }
 

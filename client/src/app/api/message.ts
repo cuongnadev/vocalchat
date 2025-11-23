@@ -6,3 +6,13 @@ export const getMessagesByConversationId = (conversationId: string) => {
         method: "GET",
     });
 }
+
+export const convertVoiceToText = async (audioBlob: Blob) => {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'voice.webm');
+
+    return requestApi<string>('/messages/record/voice-to-text', {
+        method: "POST",
+        body: formData,
+    });
+}
