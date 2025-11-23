@@ -1,46 +1,47 @@
-import http from 'http';
+import { createServer } from 'http';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
-import authRoute from '@/routes/auth.route';
-import messageRoute from '@/routes/message.route';
 import { env } from '@/config/env.config';
 import { connectDB } from '@/libs/db';
+import AppRouters from './routes/index.route';
+import { initSocket } from './services/socket.service';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = env.PORT;
 const CLIENT_URL = env.CLIENT_URL;
 
 const app = express();
 
-const server = http.createServer(app);
+const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
     origin: CLIENT_URL,
     methods: ['GET', 'POST'],
   },
+  maxHttpBufferSize: 50 * 1024 * 1024,
 });
 
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 connectDB();
 
 // Routes
-app.use('/api/v1/auth', authRoute);
-app.use('/api/v1/message', messageRoute);
+AppRouters(app);
 
-io.on('connection', (socket) => {
-  console.log('🟢 User connected:', socket.id);
+initSocket(io);
 
-  // actions
-
-  socket.on('disconnect', () => {
-    console.log('🔴 User disconnected:', socket.id);
-  });
-});
+export { io };
 
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

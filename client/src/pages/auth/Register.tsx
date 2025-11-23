@@ -5,7 +5,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { User, Lock } from 'lucide-react';
 import { useState } from 'react';
 import type { ApiError } from '@/types/api';
-import { register } from '@/app/api';
+import { register } from '@/app/api/auth';
 
 export default function Register() {
   const navigate = useNavigate();

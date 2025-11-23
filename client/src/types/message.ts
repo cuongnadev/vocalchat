@@ -1,44 +1,45 @@
-export type MessageSender = "me" | "them";
-export type MessageStatus =
-  | "sending"
-  | "sent"
-  | "delivered"
-  | "read"
-  | "failed";
+import type { User } from "./user";
 
-export type User = {
-  id: string;
-  name: string;
-  avatar: string;
-  email?: string;
-  phone?: string;
-  isOnline: boolean;
-  lastSeen?: string;
-};
+export type MessageSender = "me" | "them";
+export type MessageStatus = "sending" | "sent" | "read" | "failed";
+export type MessageType = "text" | "image" | "file" | "audio" | "video";
+
+export interface FileMetadata {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  filePath: string;
+  fileUrl: string;
+}
 
 export type Message = {
-  id: string;
+  _id: string;
   conversationId: string;
   senderId: string;
   text: string;
   sender: MessageSender;
-  timestamp: string;
-  createdAt: string;
-  updatedAt?: string;
   isRead: boolean;
   status: MessageStatus;
-  type?: "text" | "image" | "file" | "audio" | "video";
+  type: MessageType;
+  fileMetadata?: FileMetadata;
+  createdAt: string;
+  updatedAt: string;
 };
 
+export type MessageResponse = Omit<Message, "sender">;
+
 export type Conversation = {
-  id: string;
-  participantId: string;
-  participant: User;
-  lastMessage: Message | null;
+  _id: string;
+  participants: User[];
+  lastMessage: MessageResponse | null;
   unreadCount: number;
   isPinned: boolean;
   isMuted: boolean;
   isArchived: boolean;
+  isGroup: boolean;
+  groupName?: string;
+  groupAvatar?: string;
+  admin?: string;
   createdAt: string;
   updatedAt: string;
 };

@@ -11,6 +11,14 @@ out/
 .env.development
 .env.production
 
+# uploads (local file storage)
+uploads/*
+!uploads/.gitkeep
+!uploads/images/.gitkeep
+!uploads/files/.gitkeep
+!uploads/audio/.gitkeep
+!uploads/video/.gitkeep
+
 # logs
 logs
 *.log

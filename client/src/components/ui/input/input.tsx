@@ -2,38 +2,28 @@ import React from "react";
 import { Loader2 } from "lucide-react";
 import clsx from "clsx";
 
-type InputProps = {
+type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> & {
   label?: string;
-  placeholder?: string;
   icon?: React.ReactNode;
   iconPosition?: "left" | "right";
   variant?: "primary" | "secondary" | "third";
   size?: "sm" | "md" | "lg";
   radius?: "none" | "sm" | "md" | "lg" | "full";
   loading?: boolean;
-  disabled?: boolean;
   error?: string;
-  className?: string;
-  type?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 export const Input = ({
   label,
-  placeholder,
   icon,
   iconPosition = "left",
   variant = "primary",
   size = "md",
   radius = "md",
   loading = false,
-  disabled = false,
   error,
-  type = "text",
   className,
-  value,
-  onChange,
+  ...props
 }: InputProps) => {
   const baseStyles =
     "w-full flex items-center gap-2 transition-all duration-200";
@@ -66,13 +56,15 @@ export const Input = ({
       focus:ring-2 focus:ring-gray-300
     `,
     third: `
-      bg-white 
-      text-gray-800 
+      bg-white/10
+      border border-white/20
+      text-white
+      placeholder-gray-400
       shadow-sm
-      hover:shadow-md
+      hover:bg-white/15
       focus:outline-none
-      focus:ring-2 focus:ring-purple-400/40 
-      focus:shadow-lg
+      focus:ring-2 focus:ring-[#00FFFF]/50
+      focus:bg-white/15
       transition-all duration-200
     `,
   }[variant];
@@ -82,7 +74,7 @@ export const Input = ({
     sizeStyles,
     radiusStyles,
     variantStyles,
-    (disabled || loading) && "opacity-50 cursor-not-allowed",
+    (props.disabled || loading) && "opacity-50 cursor-not-allowed",
     className
   );
 
@@ -99,15 +91,11 @@ export const Input = ({
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
           <input
-            type={type}
-            placeholder={placeholder}
-            value={value}
-            onChange={onChange}
-            disabled={disabled}
+            {...props}
             className={clsx(
               "bg-transparent outline-none flex-1",
               variant === "third"
-                ? "placeholder-gray-400"
+                ? "placeholder-gray-400 text-white"
                 : "placeholder-white/50"
             )}
           />

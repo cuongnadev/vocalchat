@@ -1,46 +1,75 @@
 import type { Conversation } from "@/types/message";
 import { MoreVertical, Phone, Video } from "lucide-react";
+import { Button } from "../ui/button/Button";
 
 type HeaderProps = {
   activeConversation: Conversation | undefined;
+  onToggleDetails?: () => void;
 };
 
-export const Header = ({ activeConversation }: HeaderProps) => {
+export const Header = ({
+  activeConversation,
+  onToggleDetails,
+}: HeaderProps) => {
+  if (!activeConversation) return null;
+
+  const displayName = activeConversation.isGroup
+    ? activeConversation.groupName
+    : activeConversation.participants[0]?.name;
+
+  const displayAvatar = activeConversation.isGroup
+    ? activeConversation.groupAvatar || "https://avatar.iran.liara.run/public"
+    : activeConversation.participants[0]?.avatar ||
+      "https://avatar.iran.liara.run/public";
+
+  const displayStatus = activeConversation.isGroup
+    ? `${activeConversation.participants.length + 1} members`
+    : activeConversation.participants[0]?.isOnline
+    ? "Active now"
+    : "Offline";
+
+  const statusColor = activeConversation.isGroup
+    ? "text-gray-400"
+    : activeConversation.participants[0]?.isOnline
+    ? "text-[#00FFFF]"
+    : "text-gray-400";
+
   return (
     <div className="border-b border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <img
-          src={activeConversation?.participant.avatar}
-          alt={activeConversation?.participant.name}
+          src={displayAvatar}
+          alt={displayName}
           className="rounded-full w-10 h-10 object-cover border-2 border-white/20"
         />
         <div>
-          <h3 className="font-semibold text-white">
-            {activeConversation?.participant.name}
-          </h3>
-          <p
-            className={`text-xs ${
-              activeConversation?.participant.isOnline
-                ? "text-[#00FFFF]"
-                : "text-gray-400"
-            }`}
-          >
-            {activeConversation?.participant.isOnline
-              ? "Active now"
-              : "Offline"}
-          </p>
+          <h3 className="font-semibold text-white">{displayName}</h3>
+          <p className={`text-xs ${statusColor}`}>{displayStatus}</p>
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <Phone size={20} className="text-[#00FFFF]" />
-        </button>
-        <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <Video size={20} className="text-[#8B5CF6]" />
-        </button>
-        <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <MoreVertical size={20} className="text-gray-300" />
-        </button>
+        <Button
+          icon={<Phone size={20} color="#00FFFF" />}
+          variant="ghost"
+          size="sm"
+          radius="full"
+          className="text-[#00FFFF] py-3"
+        />
+        <Button
+          icon={<Video size={20} color="#8B5CF6" />}
+          variant="ghost"
+          size="sm"
+          radius="full"
+          className="text-[#8B5CF6] py-3"
+        />
+        <Button
+          icon={<MoreVertical size={20} />}
+          variant="ghost"
+          size="sm"
+          radius="full"
+          className="text-gray-300 py-3"
+          onClick={onToggleDetails}
+        />
       </div>
     </div>
   );

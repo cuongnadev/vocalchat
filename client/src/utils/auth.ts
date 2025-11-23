@@ -38,9 +38,8 @@ export function saveAuth(
     sessionStorage.setItem('token_expiry', expiry.toString());
   }
 
-  document.cookie = `token=${encodeURIComponent(token)}; path=/; max-age=${
-    expiresInHours * 3600
-  }; secure; samesite=strict`;
+  document.cookie = `token=${encodeURIComponent(token)}; path=/; max-age=${expiresInHours * 3600
+    }; secure; samesite=strict`;
 }
 
 export function logout(): void {
@@ -50,4 +49,15 @@ export function logout(): void {
   sessionStorage.removeItem('token_expiry');
 
   document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+}
+
+export function getToken(): string | null {
+  const localToken = localStorage.getItem("token");
+  const sessionToken = sessionStorage.getItem("token");
+
+  if (localToken) return localToken;
+  if (sessionToken) return sessionToken;
+
+  const match = document.cookie.match(/(^| )token=([^;]+)/);
+  return match ? decodeURIComponent(match[2]) : null;
 }

@@ -1,29 +1,183 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, Mic, Image, Paperclip } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
-import { conversationsData, messagesData } from "@/constants/mock-data";
 import { Header } from "./Header";
+import { ConversationDetails } from "./ConversationDetails";
+import { Button } from "../ui/button/Button";
+import { Input } from "../ui/input/input";
+import { socketService } from "@/services/socketService";
+import type { Conversation, Message, MessageType } from "@/types/message";
+import type {
+  ReceiveMessagePayload,
+  SendTextMessagePayload,
+  SendFileMessagePayload,
+  UserStatusPayload,
+} from "@/types/socket";
+import type { User } from "@/types/user";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
+import { getConversationById } from "@/app/api";
+import { chatService } from "@/services/chatService";
+import { Toast } from "../ui/toast/Toast";
+import { VoiceModal } from "../common/modal/VoiceModal";
 
 type ChatAreaProps = {
   className?: string;
   activeConversationId: string | null;
+  availableFriends?: User[];
+  onUpdateGroupInfo?: (
+    conversationId: string,
+    groupName: string,
+    groupAvatar?: string
+  ) => void;
+  onRemoveMember?: (conversationId: string, memberId: string) => void;
+  onAddMembers?: (conversationId: string, memberIds: string[]) => void;
+  onDeleteConversation?: (conversationId: string) => void;
+  onDissolveGroup?: (conversationId: string) => void;
 };
 
 export const ChatArea = ({
   className,
   activeConversationId,
+  availableFriends = [],
+  onUpdateGroupInfo,
+  onRemoveMember,
+  onAddMembers,
+  onDeleteConversation,
+  onDissolveGroup,
 }: ChatAreaProps) => {
+  const { user } = useAuth();
+  const { showToast, toasts, removeToast } = useToast();
   const [messageInput, setMessageInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [activeConversation, setActiveConversation] = useState<Conversation>();
+  const [showDetails, setShowDetails] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Find active conversation
-  const activeConversation = conversationsData.find(
-    (c) => c.id === activeConversationId
-  );
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
-  // Get messages for conversation
-  const messages = activeConversationId
-    ? messagesData[activeConversationId] || []
-    : [];
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+
+    const fetchConversation = async () => {
+      try {
+        const response = await getConversationById(activeConversationId);
+        const responseMessages = await chatService.getMessagesByConversationId(
+          activeConversationId
+        );
+
+        setMessages(
+          responseMessages.data.map((msg) => ({
+            ...msg,
+            sender: msg.senderId === user?._id ? "me" : "them",
+          }))
+        );
+
+        if (!response.success) {
+          throw new Error(response.message || "Failed to get conversation");
+        }
+
+        setActiveConversation(response.data);
+
+        // Mark messages as read when entering conversation
+        if (user?._id) {
+          socketService.markMessagesRead({
+            conversationId: activeConversationId,
+            userId: user._id,
+          });
+        }
+      } catch (error) {
+        console.log("❌ Error fetching conversation:", error);
+      }
+    };
+
+    fetchConversation();
+  }, [activeConversationId, user?._id]);
+
+  useEffect(() => {
+    if (!user?._id || !activeConversationId) return;
+
+    const handleReceiveMessage = (payload: ReceiveMessagePayload) => {
+      if (payload.message.conversationId === activeConversationId) {
+        const messagesFormatted: Message = {
+          ...payload.message,
+          sender: payload.message.senderId === user?._id ? "me" : "them",
+        };
+
+        setMessages((prev) => {
+          const filtered = prev.filter(
+            (msg) =>
+              !(
+                msg._id.startsWith("temp-") &&
+                msg.conversationId === messagesFormatted.conversationId &&
+                msg.senderId === messagesFormatted.senderId
+              )
+          );
+          return [...filtered, messagesFormatted];
+        });
+
+        // Mark messages as read immediately when receiving in active conversation
+        if (user?._id && payload.message.senderId !== user._id) {
+          socketService.markMessagesRead({
+            conversationId: activeConversationId,
+            userId: user._id,
+          });
+        }
+      }
+    };
+
+    const handleUserStatus = (payload: UserStatusPayload) => {
+      setActiveConversation((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          participants: prev.participants.map((participant) => {
+            if (participant._id === payload.userId) {
+              return {
+                ...participant,
+                isOnline: payload.online,
+              };
+            }
+            return participant;
+          }),
+        };
+      });
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleConversationUpdated = async (payload: any) => {
+      if (payload.conversationId === activeConversationId) {
+        try {
+          const response = await getConversationById(activeConversationId);
+          if (response.success) {
+            setActiveConversation(response.data);
+          }
+        } catch (error) {
+          console.error("Failed to refresh conversation:", error);
+        }
+      }
+    };
+
+    socketService.onUserStatus(handleUserStatus);
+    socketService.onConversationUpdated(handleConversationUpdated);
+
+    return () => {
+      socketService.offMessage(handleReceiveMessage);
+      socketService.offUserStatus(handleUserStatus);
+      socketService.offConversationUpdated(handleConversationUpdated);
+    };
+  }, [activeConversationId, user?._id, messages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   if (!activeConversationId || !activeConversation) {
     return (
@@ -43,11 +197,34 @@ export const ChatArea = ({
   }
 
   const handleSendMessage = () => {
-    if (messageInput.trim()) {
-      // TODO: Integrate with backend API to send message
-      console.log("Sending message:", messageInput);
-      setMessageInput("");
-    }
+    if (!messageInput.trim() || !activeConversationId) return;
+    const payload: SendTextMessagePayload = {
+      conversationId: activeConversationId,
+      senderId: user?._id as string,
+      receiverId: activeConversation.participants,
+      text: messageInput.trim(),
+      type: "text",
+    };
+
+    socketService.sendText(payload);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        _id: Date.now().toString(),
+        conversationId: payload.conversationId,
+        senderId: payload.senderId,
+        sender: "me",
+        text: payload.text,
+        isRead: false,
+        status: "sending",
+        type: payload.type,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+
+    setMessageInput("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -58,100 +235,334 @@ export const ChatArea = ({
   };
 
   const handleFileSelect = (type: "image" | "file") => {
-    // TODO: Integrate file upload
-    console.log("Opening file picker for:", type);
-
     const input = document.createElement("input");
     input.type = "file";
     input.accept = type === "image" ? "image/*" : "*/*";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log("File selected:", file);
-        // TODO: Upload file to backend
+
+      if (!file || !activeConversation || !user) {
+        return;
+      }
+
+      try {
+        const dangerousExtensions = [
+          ".exe",
+          ".bat",
+          ".cmd",
+          ".sh",
+          ".com",
+          ".scr",
+        ];
+        const fileExtension = file.name
+          .toLowerCase()
+          .substring(file.name.lastIndexOf("."));
+        if (dangerousExtensions.includes(fileExtension)) {
+          showToast("error", "This file type is not allowed!");
+          return;
+        }
+
+        // Validate file size based on type
+        const maxSize = type === "image" ? MAX_IMAGE_SIZE : MAX_FILE_SIZE;
+        if (file.size > maxSize) {
+          const sizeMB = (maxSize / (1024 * 1024)).toFixed(0);
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          showToast(
+            "error",
+            `File is too large! Maximum size for ${type === "image" ? "image" : "file"
+            } is ${sizeMB}MB. Your file: ${fileSizeMB}MB`
+          );
+          return;
+        }
+
+        // Read file as ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer();
+
+        // Determine message type based on file type
+        let messageType: "image" | "file" | "audio" | "video" = "file";
+
+        // If user clicked image button, force it to be image type
+        if (type === "image") {
+          messageType = "image";
+        } else {
+          // Otherwise, auto-detect from MIME type
+          if (file.type.startsWith("image/")) messageType = "image";
+          else if (file.type.startsWith("audio/")) messageType = "audio";
+          else if (file.type.startsWith("video/")) messageType = "video";
+        }
+
+        // Get receiver info - use full User objects from participants
+        const receiverId = activeConversation.participants;
+
+        // Create temporary message for UI
+        const tempMessage: Message = {
+          _id: `temp-${Date.now()}`,
+          conversationId: activeConversation._id,
+          senderId: user._id,
+          text: file.name,
+          sender: "me",
+          isRead: false,
+          status: "sending",
+          type: messageType,
+          fileMetadata: {
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            filePath: "",
+            fileUrl: URL.createObjectURL(file),
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        // Add to UI immediately
+        setMessages((prev) => [...prev, tempMessage]);
+
+        // Send via socket
+        const payload: SendFileMessagePayload = {
+          conversationId: activeConversation._id,
+          senderId: user._id,
+          receiverId,
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          buffer: arrayBuffer,
+          type: messageType,
+        };
+
+        socketService.sendFile(payload);
+
+        // Show success toast
+        showToast(
+          "success",
+          `Sending ${messageType === "image" ? "image" : "file"}: ${file.name}`
+        );
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        showToast("error", "Error uploading file. Please try again!");
+        // Remove failed temp message
+        setMessages((prev) =>
+          prev.filter((msg) => !msg._id.startsWith("temp-"))
+        );
       }
     };
     input.click();
   };
 
-  const handleVoiceRecord = () => {
-    // TODO: Integrate voice recording
-    console.log("Start voice recording");
+  const handleSendRecord = async (mode: Extract<MessageType, "text" | "audio">, audio: Blob) => {
+    if (!activeConversationId) return;
+
+    if (mode === "audio") {
+      const file = new File([audio], `recording-${Date.now()}.webm`, { type: "audio/webm" });
+
+      const tempMessage: Message = {
+        _id: `temp-${Date.now()}`,
+        conversationId: activeConversation._id,
+        senderId: user?._id as string,
+        text: file.name,
+        sender: "me",
+        isRead: false,
+        status: "sending",
+        type: "audio",
+        fileMetadata: {
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          filePath: "",
+          fileUrl: URL.createObjectURL(file),
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Add to UI immediately
+      setMessages((prev) => [...prev, tempMessage]);
+
+      // Send via socket
+      const payload: SendFileMessagePayload = {
+        conversationId: activeConversation._id,
+        senderId: user?._id as string,
+        receiverId: activeConversation.participants,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        buffer: await audio.arrayBuffer(),
+        type: "audio",
+      };
+
+      socketService.sendFile(payload);
+    }
+
+    if (mode === "text") {
+      const response = await chatService.convertVoiceToText(audio);
+
+      const payload: SendTextMessagePayload = {
+        conversationId: activeConversationId,
+        senderId: user?._id as string,
+        receiverId: activeConversation.participants,
+        text: response.data,
+        type: "text",
+      };
+
+      socketService.sendText(payload);
+
+      setMessages((prev) => [
+      ...prev,
+      {
+        _id: Date.now().toString(),
+        conversationId: payload.conversationId,
+        senderId: payload.senderId,
+        sender: "me",
+        text: payload.text,
+        isRead: false,
+        status: "sending",
+        type: payload.type,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+    }
   };
 
   return (
-    <div
-      className={`${className} bg-white/5 backdrop-blur-xl flex flex-col h-screen`}
-    >
-      {/* Header */}
-      <Header activeConversation={activeConversation} />
+    <div className={`${className} bg-white/5 backdrop-blur-xl flex h-screen`}>
+      <div className="flex-1 flex flex-col">
+        <Header
+          activeConversation={activeConversation}
+          onToggleDetails={() => setShowDetails(!showDetails)}
+        />
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        {messages.length > 0 ? (
-          messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              message={message}
-              avatar={activeConversation.participant.avatar}
-            />
-          ))
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400">No messages yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="border-t border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4">
-        <div className="flex items-center gap-2">
-          {/* File & Image buttons */}
-          <button
-            onClick={() => handleFileSelect("file")}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            title="Attach file"
-          >
-            <Paperclip size={20} className="text-[#8B5CF6]" />
-          </button>
-          <button
-            onClick={() => handleFileSelect("image")}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            title="Send image"
-          >
-            <Image size={20} className="text-[#00FFFF]" />
-          </button>
-
-          {/* Input field */}
-          <input
-            type="text"
-            placeholder="Aa"
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-full outline-none focus:ring-2 focus:ring-[#00FFFF] transition-colors placeholder-gray-400 text-white"
-          />
-
-          {/* Voice or Send button */}
-          {messageInput.trim() ? (
-            <button
-              onClick={handleSendMessage}
-              className="p-3 bg-linear-to-r from-[#00FFFF] to-[#8B5CF6] hover:from-[#00FFFF]/80 hover:to-[#8B5CF6]/80 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-              title="Send message"
-            >
-              <Send size={20} className="text-white" />
-            </button>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {messages.length > 0 ? (
+            messages.map((message) => (
+              <ChatMessage
+                key={message._id}
+                message={message}
+                avatar={activeConversation.participants[0].avatar}
+              />
+            ))
           ) : (
-            <button
-              onClick={handleVoiceRecord}
-              className="p-3 hover:bg-white/10 rounded-full transition-colors"
-              title="Record voice message"
-            >
-              <Mic size={20} className="text-[#8B5CF6]" />
-            </button>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-400">No messages yet</p>
+            </div>
           )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4">
+          <div className="flex items-center gap-2">
+            {/* File & Image buttons */}
+            <Button
+              icon={<Paperclip size={20} color="#8B5CF6" />}
+              variant="ghost"
+              size="sm"
+              radius="full"
+              onClick={() => handleFileSelect("file")}
+              className="text-[#8B5CF6] py-3"
+            />
+            <Button
+              icon={<Image size={20} color="#00FFFF" />}
+              variant="ghost"
+              size="sm"
+              radius="full"
+              onClick={() => handleFileSelect("image")}
+              className="text-[#00FFFF] py-3"
+            />
+
+            {/* Input field */}
+            <div className="flex-1">
+              <Input
+                type="text"
+                placeholder="Aa"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                className="w-full"
+                radius="full"
+                variant="third"
+              />
+            </div>
+
+            {/* Voice or Send button */}
+            {messageInput.trim() ? (
+              <Button
+                icon={<Send size={20} />}
+                variant="primary"
+                size="sm"
+                radius="full"
+                onClick={handleSendMessage}
+                className="shadow-lg hover:shadow-xl py-3"
+              />
+            ) : (
+              <Button
+                icon={<Mic size={20} color="#8B5CF6" />}
+                variant="ghost"
+                size="sm"
+                radius="full"
+                onClick={() => setShowVoiceModal(true)}
+                className="text-[#8B5CF6] py-3"
+              />
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Conversation Details */}
+      {showDetails && activeConversation && user && (
+        <ConversationDetails
+          conversation={activeConversation}
+          currentUser={user}
+          availableFriends={availableFriends}
+          onClose={() => setShowDetails(false)}
+          onUpdateGroupInfo={(groupName, groupAvatar) => {
+            if (onUpdateGroupInfo) {
+              onUpdateGroupInfo(activeConversation._id, groupName, groupAvatar);
+            }
+          }}
+          onRemoveMember={(memberId) => {
+            if (onRemoveMember) {
+              onRemoveMember(activeConversation._id, memberId);
+            }
+          }}
+          onAddMembers={(memberIds) => {
+            if (onAddMembers) {
+              onAddMembers(activeConversation._id, memberIds);
+            }
+          }}
+          onDeleteConversation={() => {
+            if (onDeleteConversation) {
+              onDeleteConversation(activeConversation._id);
+              setShowDetails(false);
+            }
+          }}
+          onDissolveGroup={() => {
+            if (onDissolveGroup) {
+              onDissolveGroup(activeConversation._id);
+              setShowDetails(false);
+            }
+          }}
+        />
+      )}
+
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            type={toast.type}
+            message={toast.message}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
+
+      {showVoiceModal && (
+        <VoiceModal
+          onClose={() => setShowVoiceModal(false)}
+          onSend={handleSendRecord}
+        />
+      )}
     </div>
   );
 };

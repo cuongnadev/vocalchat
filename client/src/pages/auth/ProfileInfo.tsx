@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { User } from 'lucide-react';
 import type { ApiError, } from '@/types/api';
-import { updateProfile } from '@/app/api';
+import { updateProfile } from '@/app/api/auth';
 
 export default function ProfileInfo() {
     const navigate = useNavigate();

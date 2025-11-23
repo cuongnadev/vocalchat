@@ -25,12 +25,14 @@
     "lucide-react": "^0.552.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.15",
     "three": "^0.181.0",
     "threejs-toys": "^0.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",

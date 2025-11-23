@@ -5,6 +5,7 @@ dotenv.config();
 export const env = {
   PORT: process.env.PORT || 5240,
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  SERVER_URL: process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5240}`,
   DATABASE_URL: process.env.DATABASE_URL || '',
   JWT_SECRET: process.env.JWT_SECRET || 'supersecret',
   EMAIL_USER: process.env.EMAIL_USER || 'your_email@gmail.com',
