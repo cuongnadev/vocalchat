@@ -53,6 +53,7 @@ export const ChatArea = ({
   const [activeConversation, setActiveConversation] = useState<Conversation>();
   const [showDetails, setShowDetails] = useState(false);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -394,7 +395,11 @@ export const ChatArea = ({
     }
 
     if (mode === "text") {
+      setIsConverting(true);
+
       const response = await chatService.convertVoiceToText(audio);
+
+      setIsConverting(false);
 
       const payload: SendTextMessagePayload = {
         conversationId: activeConversationId,
@@ -407,20 +412,20 @@ export const ChatArea = ({
       socketService.sendText(payload);
 
       setMessages((prev) => [
-      ...prev,
-      {
-        _id: Date.now().toString(),
-        conversationId: payload.conversationId,
-        senderId: payload.senderId,
-        sender: "me",
-        text: payload.text,
-        isRead: false,
-        status: "sending",
-        type: payload.type,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ]);
+        ...prev,
+        {
+          _id: Date.now().toString(),
+          conversationId: payload.conversationId,
+          senderId: payload.senderId,
+          sender: "me",
+          text: payload.text,
+          isRead: false,
+          status: "sending",
+          type: payload.type,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ]);
     }
   };
 
@@ -452,6 +457,9 @@ export const ChatArea = ({
 
         {/* Input */}
         <div className="border-t border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4">
+          {isConverting && (
+            <p className="text-sm text-right text-[#00FFFF] -translate-y-2 -translate-x-16">Converting voice to text...</p>
+          )}
           <div className="flex items-center gap-2">
             {/* File & Image buttons */}
             <Button
