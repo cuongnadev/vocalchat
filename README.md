@@ -56,13 +56,16 @@ git clone git@github.com:cuongnadev/vocalchat.git
 cd vocalchat
 ```
 
-### 🤖 Step 2: Setup Local WhisperModel (Optional)
+### 🤖 Step 2: Setup and Run Local WhisperModel (Optional)
 ```bash
 # Navigate to whisper-local directory
 cd whisper-local
 
 # Install Python dependencies
 pip install -r requirements.txt
+
+# Run
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 ⚠️ **Important Notes about Local WhisperModel:**
 
