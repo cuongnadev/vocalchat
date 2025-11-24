@@ -56,7 +56,7 @@ git clone git@github.com:cuongnadev/vocalchat.git
 cd vocalchat
 ```
 
-### 🤖 Step 2: Setup and Run Local WhisperModel (Optional)
+### 🤖 Step 2: Setup and Run Local WhisperModel
 ```bash
 # Navigate to whisper-local directory
 cd whisper-local
