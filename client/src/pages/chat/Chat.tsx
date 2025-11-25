@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/chat/Sidebar";
 import { FriendsView } from "@/components/view/friends/FriendsView";
 import { SettingsView } from "@/components/view/setting/SettingsView";
 import { CreateGroupModal } from "@/components/common/modal/CreateGroupModal";
+import { CallProvider } from "@/components/call";
 import { useAuth } from "@/hooks/useAuth";
 import {
   sendFriendRequest,
@@ -320,92 +321,97 @@ const Chat = () => {
   };
 
   return (
-    <div className="relative flex h-screen bg-linear-to-br from-[#0a001f] via-[#10002b] to-[#1b0038] overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 blur-[120px] rounded-full animate-pulse" />
-      </div>
+    <CallProvider
+      currentoderId={user._id}
+      currentoderName={user.name}
+      currentoderAvatar={user.avatar || "https://avatar.iran.liara.run/public"}
+    >
+      <div className="relative flex h-screen bg-linear-to-br from-[#0a001f] via-[#10002b] to-[#1b0038] overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 blur-[120px] rounded-full animate-pulse" />
+        </div>
 
-      <Sidebar
-        className="w-90 relative z-10"
-        activeConversationId={activeConversationId}
-        onSelectConversation={handleSelectConversation}
-        currentUser={currentUser}
-        onSettingsClick={handleSettingsClick}
-        onFriendsClick={handleFriendsClick}
-        onNewChatClick={handleNewChatClick}
-        refreshTrigger={refreshTrigger}
-        onMarkAsRead={handleMarkAsRead}
-        onMarkAsUnread={handleMarkAsUnread}
-        onDeleteConversation={handleDeleteConversation}
-        onStartConversation={handleStartConversation}
-      />
-
-      {currentView === "chat" && (
-        <ChatArea
-          className="flex-1 relative z-10"
+        <Sidebar
+          className="w-90 relative z-10"
           activeConversationId={activeConversationId}
-          availableFriends={friends}
-          onUpdateGroupInfo={handleUpdateGroupInfo}
-          onRemoveMember={handleRemoveMember}
-          onAddMembers={handleAddMembers}
-          onDeleteConversation={handleDeleteConversation}
-          onDissolveGroup={handleDissolveGroup}
-        />
-      )}
-
-      {currentView === "friends" && (
-        <FriendsView
-          className="flex-1 relative z-10"
-          onAddFriend={handleAddFriend}
-          onUnfriend={handleUnfriend}
-          showToast={showToast}
-        />
-      )}
-
-      {currentView === "settings" && (
-        <SettingsView
-          className="flex-1 relative z-10"
+          onSelectConversation={handleSelectConversation}
           currentUser={currentUser}
-          onSaveSettings={handleSaveSettings}
-          showToast={showToast}
+          onSettingsClick={handleSettingsClick}
+          onFriendsClick={handleFriendsClick}
+          onNewChatClick={handleNewChatClick}
+          refreshTrigger={refreshTrigger}
+          onMarkAsRead={handleMarkAsRead}
+          onMarkAsUnread={handleMarkAsUnread}
+          onDeleteConversation={handleDeleteConversation}
+          onStartConversation={handleStartConversation}
         />
-      )}
 
-      {/* Create Group Modal */}
-      <CreateGroupModal
-        isOpen={isCreateGroupModalOpen}
-        onClose={() => setIsCreateGroupModalOpen(false)}
-        availableUsers={friends}
-        onCreateGroup={handleCreateGroup}
-      />
-
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `,
-        }}
-      />
-
-      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            type={toast.type}
-            message={toast.message}
-            onClose={() => removeToast(toast.id)}
+        {currentView === "chat" && (
+          <ChatArea
+            className="flex-1 relative z-10"
+            activeConversationId={activeConversationId}
+            availableFriends={friends}
+            onUpdateGroupInfo={handleUpdateGroupInfo}
+            onRemoveMember={handleRemoveMember}
+            onAddMembers={handleAddMembers}
+            onDeleteConversation={handleDeleteConversation}
+            onDissolveGroup={handleDissolveGroup}
           />
-        ))}
+        )}
+
+        {currentView === "friends" && (
+          <FriendsView
+            className="flex-1 relative z-10"
+            onAddFriend={handleAddFriend}
+            onUnfriend={handleUnfriend}
+            showToast={showToast}
+          />
+        )}
+
+        {currentView === "settings" && (
+          <SettingsView
+            className="flex-1 relative z-10"
+            currentUser={currentUser}
+            onSaveSettings={handleSaveSettings}
+            showToast={showToast}
+          />
+        )}
+
+        {/* Create Group Modal */}
+        <CreateGroupModal
+          isOpen={isCreateGroupModalOpen}
+          onClose={() => setIsCreateGroupModalOpen(false)}
+          availableUsers={friends}
+          onCreateGroup={handleCreateGroup}
+        />
+
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `,
+          }}
+        />
+
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+          {toasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              type={toast.type}
+              message={toast.message}
+              onClose={() => removeToast(toast.id)}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </CallProvider>
   );
 };
 

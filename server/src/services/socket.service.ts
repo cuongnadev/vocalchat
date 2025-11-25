@@ -11,12 +11,26 @@ import type {
   ReceiveMessagePayload,
   ConversationUpdatedPayload,
   MarkMessagesReadPayload,
+  InitiateCallPayload,
+  CallResponsePayload,
+  EndCallPayload,
+  WebRTCSignalPayload,
 } from '@/types/socket';
 import type { IMessage, MessageType } from '@/types/message';
 import { Message } from '@/models/message.model';
 import { Conversation } from '@/models/conversation.model';
 import { User } from '@/models/user.model';
 import { env } from '@/config/env.config';
+import {
+  initiateCall,
+  acceptCall,
+  rejectCall,
+  endCall,
+  cancelCall,
+  handleWebRTCSignal,
+  isUserInCall,
+  getUserActiveCall,
+} from './call.service';
 
 const onlineUsers = new Map<string, string>();
 
@@ -262,7 +276,50 @@ export function initSocket(io: Server<ClientToServerEvents, ServerToClientEvents
       // Update user status in database
       await User.findByIdAndUpdate(userId, { isOnline: false });
 
+      // Handle active call cleanup on disconnect
+      const activeCallId = getUserActiveCall(userId);
+      if (activeCallId) {
+        await endCall(activeCallId, userId);
+      }
+
       io.emit('user:status', { userId, online: false } as UserStatusPayload);
+    });
+
+    // Call events
+    socket.on('call:initiate', async (payload: InitiateCallPayload) => {
+      await initiateCall(payload);
+    });
+
+    socket.on('call:accept', async (payload: CallResponsePayload) => {
+      await acceptCall(payload.callId, payload.oderId);
+    });
+
+    socket.on('call:reject', async (payload: CallResponsePayload) => {
+      await rejectCall(payload.callId, payload.oderId);
+    });
+
+    socket.on('call:end', async (payload: EndCallPayload) => {
+      await endCall(payload.callId, payload.oderId);
+    });
+
+    socket.on('call:cancel', async (callId: string) => {
+      await cancelCall(callId);
+    });
+
+    socket.on('call:signal', async (payload: WebRTCSignalPayload) => {
+      await handleWebRTCSignal(
+        payload.callId,
+        payload.senderId,
+        payload.targetId,
+        payload.signal,
+        payload.type,
+      );
+    });
+
+    socket.on('call:check:status', (oderId: string) => {
+      const inCall = isUserInCall(oderId);
+      const callId = getUserActiveCall(oderId);
+      socket.emit('call:status:response', { oderId, isInCall: inCall, callId });
     });
   });
 }

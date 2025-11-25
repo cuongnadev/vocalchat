@@ -12,6 +12,7 @@ import type {
   SendTextMessagePayload,
   SendFileMessagePayload,
   UserStatusPayload,
+  CallHistoryPayload,
 } from "@/types/socket";
 import type { User } from "@/types/user";
 import { useAuth } from "@/hooks/useAuth";
@@ -166,14 +167,32 @@ export const ChatArea = ({
       }
     };
 
+    // Handle call history messages
+    const handleCallHistory = (payload: CallHistoryPayload) => {
+      if (payload.message.conversationId === activeConversationId) {
+        const callMessage: Message = {
+          ...payload.message,
+          sender: payload.message.senderId === user?._id ? "me" : "them",
+        };
+
+        setMessages((prev) => {
+          const exists = prev.some((msg) => msg._id === callMessage._id);
+          if (exists) return prev;
+          return [...prev, callMessage];
+        });
+      }
+    };
+
     socketService.onMessage(handleReceiveMessage);
     socketService.onUserStatus(handleUserStatus);
     socketService.onConversationUpdated(handleConversationUpdated);
+    socketService.onCallHistory(handleCallHistory);
 
     return () => {
       socketService.offMessage(handleReceiveMessage);
       socketService.offUserStatus(handleUserStatus);
       socketService.offConversationUpdated(handleConversationUpdated);
+      socketService.offCallHistory(handleCallHistory);
     };
   }, [activeConversationId, user?._id, messages]);
 
