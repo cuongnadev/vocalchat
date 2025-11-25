@@ -68,6 +68,7 @@ export const CallWindow = ({
     useState<string>("connecting");
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const callTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -86,7 +87,8 @@ export const CallWindow = ({
         currentStream = stream;
         setLocalStream(stream);
 
-        if (localVideoRef.current) {
+        // For video calls, set the video element
+        if (callType === "video" && localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
       } catch (error) {
@@ -142,23 +144,52 @@ export const CallWindow = ({
 
       // Handle incoming tracks
       pc.ontrack = (event) => {
+        const remoteStream = event.streams[0];
+
+        // When we receive a track, it means the connection is established
+        setConnectionStatus("connected");
+
         setRemoteStreams((prev) => {
           const newMap = new Map(prev);
-          newMap.set(targetId, event.streams[0]);
+          newMap.set(targetId, remoteStream);
           return newMap;
         });
+
+        if (callType === "audio" && event.track.kind === "audio") {
+          let audioEl = remoteAudioRefs.current.get(targetId);
+          if (!audioEl) {
+            audioEl = new Audio();
+            audioEl.autoplay = true;
+            remoteAudioRefs.current.set(targetId, audioEl);
+          }
+          audioEl.srcObject = remoteStream;
+          audioEl
+            .play()
+            .catch((err) => console.error("Audio play error:", err));
+        }
       };
 
       // Handle connection state changes
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") {
           setConnectionStatus("connected");
-        } else if (
-          pc.connectionState === "disconnected" ||
-          pc.connectionState === "failed"
-        ) {
-          setConnectionStatus("disconnected");
+        } else if (pc.connectionState === "failed") {
+          setConnectionStatus("failed");
         }
+        // Ignore "disconnected", "closed", "connecting", "new" - they are transitional
+      };
+
+      // Also monitor ICE connection state as backup
+      pc.oniceconnectionstatechange = () => {
+        if (
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"
+        ) {
+          setConnectionStatus("connected");
+        } else if (pc.iceConnectionState === "failed") {
+          setConnectionStatus("failed");
+        }
+        // Ignore "checking", "disconnected", "closed", "new" - they are transitional or may recover
       };
 
       peerConnections.current.set(targetId, pc);
@@ -232,6 +263,33 @@ export const CallWindow = ({
           });
         }
       });
+    } else {
+      // If receiver, wait a bit then send offer if no connection established
+      // This handles the case where caller's offer was sent before receiver was ready
+      const timeoutId = setTimeout(() => {
+        participants.forEach(async (participant) => {
+          if (participant.oderId !== currentoderId) {
+            // Only create offer if we don't have a peer connection yet
+            if (!peerConnections.current.has(participant.oderId)) {
+              const pc = createPeerConnection(participant.oderId);
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              socketService.sendSignal({
+                callId,
+                senderId: currentoderId,
+                targetId: participant.oderId,
+                signal: offer,
+                type: "offer",
+              });
+            }
+          }
+        });
+      }, 1000); // Wait 1 second for caller's offer
+
+      return () => {
+        clearTimeout(timeoutId);
+        socketService.offCallSignal(handleSignal);
+      };
     }
 
     return () => {
@@ -277,10 +335,18 @@ export const CallWindow = ({
   // Cleanup on unmount
   useEffect(() => {
     const connections = peerConnections.current;
+    const audioRefs = remoteAudioRefs.current;
     return () => {
       // Close all peer connections
       connections.forEach((pc) => pc.close());
       connections.clear();
+
+      // Stop all audio elements
+      audioRefs.forEach((audio) => {
+        audio.srcObject = null;
+        audio.pause();
+      });
+      audioRefs.clear();
 
       // Stop all tracks
       localStream?.getTracks().forEach((track) => track.stop());
@@ -325,6 +391,13 @@ export const CallWindow = ({
     peerConnections.current.forEach((pc) => pc.close());
     peerConnections.current.clear();
 
+    // Stop all remote audio elements
+    remoteAudioRefs.current.forEach((audio) => {
+      audio.srcObject = null;
+      audio.pause();
+    });
+    remoteAudioRefs.current.clear();
+
     onEndCall();
     onClose();
   };
@@ -364,10 +437,21 @@ export const CallWindow = ({
             {formatDuration(callDuration)}
           </span>
           {connectionStatus === "connecting" && (
-            <span className="text-yellow-400 text-xs">Connecting...</span>
+            <span className="text-yellow-400 text-xs animate-pulse">
+              Connecting...
+            </span>
           )}
           {connectionStatus === "connected" && (
-            <span className="text-green-400 text-xs">Connected</span>
+            <span className="text-green-400 text-xs flex items-center gap-1">
+              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+              Connected
+            </span>
+          )}
+          {connectionStatus === "failed" && (
+            <span className="text-red-400 text-xs">Connection Failed</span>
+          )}
+          {connectionStatus === "media-error" && (
+            <span className="text-red-400 text-xs">Media Error</span>
           )}
         </div>
         <button
@@ -409,7 +493,14 @@ export const CallWindow = ({
                       autoPlay
                       playsInline
                       ref={(el) => {
-                        if (el) el.srcObject = stream;
+                        if (el && el.srcObject !== stream) {
+                          el.srcObject = stream;
+                          // Ensure audio plays for video calls
+                          el.muted = false;
+                          el.play().catch((err) =>
+                            console.error("Video play error:", err)
+                          );
+                        }
                       }}
                       className="w-full h-full object-cover"
                     />
