@@ -2,6 +2,7 @@ import type { Message } from "@/types/message";
 import { formatTime } from "@/utils/formatTime";
 import { Download, FileText, Music, Video } from "lucide-react";
 import { Button } from "../ui/button/Button";
+import { CallMessage } from "./CallMessage";
 
 type ChatMessageProps = {
   message: Message;
@@ -31,6 +32,17 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
   const isMe = message.sender === "me";
 
   const renderMessageContent = () => {
+    // Call message
+    if (message.type === "call" && message.callMetadata) {
+      return (
+        <CallMessage
+          callMetadata={message.callMetadata}
+          sender={message.sender}
+          createdAt={message.createdAt}
+        />
+      );
+    }
+
     if (message.type === "text") {
       return <p className="text-sm">{message.text}</p>;
     }
@@ -55,7 +67,7 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
                 onClick={() => {
                   handleDownload(
                     message.fileMetadata!.fileUrl,
-                    message.fileMetadata!.fileName,
+                    message.fileMetadata!.fileName
                   );
                 }}
               />
@@ -83,7 +95,6 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
       );
     }
 
-
     if (
       (message.type === "file" ||
         message.type === "audio" ||
@@ -95,8 +106,8 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
         message.type === "audio"
           ? Music
           : message.type === "video"
-            ? Video
-            : FileText;
+          ? Video
+          : FileText;
 
       let audio: HTMLAudioElement | null = null;
       if (message.type === "audio") {
@@ -150,8 +161,9 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
   return (
     <div className={`flex ${isMe ? "justify-end" : "justify-start"} mb-3`}>
       <div
-        className={`flex gap-2 max-w-[70%] ${isMe ? "flex-row-reverse" : "flex-row"
-          }`}
+        className={`flex gap-2 max-w-[70%] ${
+          isMe ? "flex-row-reverse" : "flex-row"
+        }`}
       >
         {!isMe && avatar && (
           <img
@@ -162,16 +174,18 @@ export const ChatMessage = ({ message, avatar }: ChatMessageProps) => {
         )}
         <div className="flex flex-col">
           <div
-            className={`px-4 py-2 rounded-2xl ${isMe
-              ? "bg-linear-to-r from-[#00FFFF] to-[#8B5CF6] text-white rounded-br-sm shadow-lg"
-              : "bg-white/10 backdrop-blur-md text-white rounded-bl-sm border border-white/20"
-              }`}
+            className={`px-4 py-2 rounded-2xl ${
+              isMe
+                ? "bg-linear-to-r from-[#00FFFF] to-[#8B5CF6] text-white rounded-br-sm shadow-lg"
+                : "bg-white/10 backdrop-blur-md text-white rounded-bl-sm border border-white/20"
+            }`}
           >
             {renderMessageContent()}
           </div>
           <span
-            className={`text-xs text-gray-400 mt-1 ${isMe ? "text-right" : "text-left"
-              }`}
+            className={`text-xs text-gray-400 mt-1 ${
+              isMe ? "text-right" : "text-left"
+            }`}
           >
             {formatTime(message.updatedAt)}
           </span>

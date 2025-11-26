@@ -12,6 +12,7 @@ import type {
   SendTextMessagePayload,
   SendFileMessagePayload,
   UserStatusPayload,
+  CallHistoryPayload,
 } from "@/types/socket";
 import type { User } from "@/types/user";
 import { useAuth } from "@/hooks/useAuth";
@@ -166,13 +167,32 @@ export const ChatArea = ({
       }
     };
 
+    // Handle call history messages
+    const handleCallHistory = (payload: CallHistoryPayload) => {
+      if (payload.message.conversationId === activeConversationId) {
+        const callMessage: Message = {
+          ...payload.message,
+          sender: payload.message.senderId === user?._id ? "me" : "them",
+        };
+
+        setMessages((prev) => {
+          const exists = prev.some((msg) => msg._id === callMessage._id);
+          if (exists) return prev;
+          return [...prev, callMessage];
+        });
+      }
+    };
+
+    socketService.onMessage(handleReceiveMessage);
     socketService.onUserStatus(handleUserStatus);
     socketService.onConversationUpdated(handleConversationUpdated);
+    socketService.onCallHistory(handleCallHistory);
 
     return () => {
       socketService.offMessage(handleReceiveMessage);
       socketService.offUserStatus(handleUserStatus);
       socketService.offConversationUpdated(handleConversationUpdated);
+      socketService.offCallHistory(handleCallHistory);
     };
   }, [activeConversationId, user?._id, messages]);
 
@@ -212,7 +232,7 @@ export const ChatArea = ({
     setMessages((prev) => [
       ...prev,
       {
-        _id: Date.now().toString(),
+        _id: `temp-${Date.now()}`,
         conversationId: payload.conversationId,
         senderId: payload.senderId,
         sender: "me",
@@ -270,7 +290,8 @@ export const ChatArea = ({
           const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
           showToast(
             "error",
-            `File is too large! Maximum size for ${type === "image" ? "image" : "file"
+            `File is too large! Maximum size for ${
+              type === "image" ? "image" : "file"
             } is ${sizeMB}MB. Your file: ${fileSizeMB}MB`
           );
           return;
@@ -350,11 +371,16 @@ export const ChatArea = ({
     input.click();
   };
 
-  const handleSendRecord = async (mode: Extract<MessageType, "text" | "audio">, audio: Blob) => {
+  const handleSendRecord = async (
+    mode: Extract<MessageType, "text" | "audio">,
+    audio: Blob
+  ) => {
     if (!activeConversationId) return;
 
     if (mode === "audio") {
-      const file = new File([audio], `recording-${Date.now()}.webm`, { type: "audio/webm" });
+      const file = new File([audio], `recording-${Date.now()}.webm`, {
+        type: "audio/webm",
+      });
 
       const tempMessage: Message = {
         _id: `temp-${Date.now()}`,
@@ -414,7 +440,7 @@ export const ChatArea = ({
       setMessages((prev) => [
         ...prev,
         {
-          _id: Date.now().toString(),
+          _id: `temp-${Date.now()}`,
           conversationId: payload.conversationId,
           senderId: payload.senderId,
           sender: "me",
@@ -458,7 +484,9 @@ export const ChatArea = ({
         {/* Input */}
         <div className="border-t border-white/10 bg-white/5 backdrop-blur-xl px-6 py-4">
           {isConverting && (
-            <p className="text-sm text-right text-[#00FFFF] -translate-y-2 -translate-x-16">Converting voice to text...</p>
+            <p className="text-sm text-right text-[#00FFFF] -translate-y-2 -translate-x-16">
+              Converting voice to text...
+            </p>
           )}
           <div className="flex items-center gap-2">
             {/* File & Image buttons */}

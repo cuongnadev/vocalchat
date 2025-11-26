@@ -2,7 +2,13 @@ import type { User } from "./user";
 
 export type MessageSender = "me" | "them";
 export type MessageStatus = "sending" | "sent" | "read" | "failed";
-export type MessageType = "text" | "image" | "file" | "audio" | "video";
+export type MessageType =
+  | "text"
+  | "image"
+  | "file"
+  | "audio"
+  | "video"
+  | "call";
 
 export interface FileMetadata {
   fileName: string;
@@ -10,6 +16,15 @@ export interface FileMetadata {
   fileSize: number;
   filePath: string;
   fileUrl: string;
+}
+
+export interface CallMetadata {
+  callId: string;
+  callType: "audio" | "video";
+  callStatus: "ended" | "missed" | "rejected" | "busy";
+  duration?: number;
+  startedAt?: string;
+  endedAt?: string;
 }
 
 export type Message = {
@@ -22,6 +37,7 @@ export type Message = {
   status: MessageStatus;
   type: MessageType;
   fileMetadata?: FileMetadata;
+  callMetadata?: CallMetadata;
   createdAt: string;
   updatedAt: string;
 };
